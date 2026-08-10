@@ -1,0 +1,143 @@
+{
+  "events": [
+    {
+      "name": "Virtual Market",
+      "variants": [
+        {
+          "name": "Space",
+          "types": [
+            {
+              "name": "Standard",
+              "width_m": 4.0,
+              "depth_m": 4.0,
+              "height_m": 5.0,
+              "front_axis": "-y"
+            }
+          ]
+        },
+        {
+          "name": "Item",
+          "types": [
+            {
+              "name": "Item",
+              "width_m": 1.0,
+              "depth_m": 1.0,
+              "height_m": 2.0,
+              "front_axis": "-y"
+            }
+          ]
+        },
+        {
+          "name": "Avatar",
+          "types": [
+            {
+              "name": "Cross Platform",
+              "width_m": 2.0,
+              "depth_m": 2.0,
+              "height_m": 3.0,
+              "front_axis": "-y"
+            }
+          ]
+        },
+        {
+            "name": "Special",
+            "types": [
+            {
+                "name": "Special (2026S Poppy Street)",
+                "width_m": 3.0,
+                "depth_m": 6.3,
+                "height_m": 5.0,
+                "front_axis": "-y"
+            }
+            ]
+        },
+        {
+            "name": "Legacy",
+            "types": [
+            {
+              "name": "Large",
+              "width_m": 10.0,
+              "depth_m": 10.0,
+              "height_m": 10.0,
+              "front_axis": "-y"
+            },
+            {
+              "name": "Extra Large",
+              "width_m": 30.0,
+              "depth_m": 30.0,
+              "height_m": 30.0,
+              "front_axis": "-y"
+            }
+            ]
+        }
+      ]
+    },
+    {
+      "name": "Taneket",
+      "variants": [
+        {
+          "name": "Booth",
+          "types": [
+            {
+              "name": "Standard",
+              "width_m": 10.0,
+              "depth_m": 10.0,
+              "height_m": 30.0,
+              "front_axis": "-y"
+            },
+            {
+              "name": "Max",
+              "width_m": 10.0,
+              "depth_m": 10.0,
+              "height_m": 30.0,
+              "front_axis": "-y"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Casmarket",
+      "variants": [
+        {
+          "name": "Booth",
+          "types": [
+            {
+              "name": "S",
+              "width_m": 4.0,
+              "depth_m": 4.0,
+              "height_m": 5.0,
+              "front_axis": "-y"
+            },
+            {
+              "name": "M",
+              "width_m": 5.0,
+              "depth_m": 4.0,
+              "height_m": 9.0,
+              "front_axis": "-y"
+            },
+            {
+              "name": "L",
+              "width_m": 10.0,
+              "depth_m": 10.0,
+              "height_m": 10.0,
+              "front_axis": "-y"
+            }
+          ]
+        },
+        {
+          "name": "Item",
+          "types": [
+            {
+              "name": "Item",
+              "width_m": 1.0,
+              "depth_m": 1.0,
+              "height_m": 2.0,
+              "front_axis": "-y"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

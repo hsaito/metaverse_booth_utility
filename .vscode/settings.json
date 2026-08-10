@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cd 'd:\\\\codes\\\\Metaverse_Booth_Utility' ; python -m py_compile metaverse_booth_utility/__init__\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
