@@ -634,14 +634,27 @@ class BOOTH_OT_generate_frame(Operator):
         return frame_obj
 
     def _create_front_arrow(self, frame_obj, width, depth, height, front_axis):
-        axis_vector = self._axis_to_vector(front_axis)
-        base_location_world = Vector((0.0, 0.0, 0.0))
+        normalized_axis = normalize_front_axis(front_axis)
+        axis_vector = self._axis_to_vector(normalized_axis)
+
+        # Place the marker at booth center so +/- directions can remain inside bounds.
+        base_location_world = Vector((0.0, 0.0, height / 2.0))
+
+        if normalized_axis.startswith("x"):
+            axis_half_extent = width / 2.0
+        elif normalized_axis.startswith("y"):
+            axis_half_extent = depth / 2.0
+        else:
+            axis_half_extent = height / 2.0
+
+        # 0.8 margin keeps the tip and body safely within the frame volume.
+        marker_size = max(axis_half_extent * 0.8, 0.05)
 
         bpy.ops.object.empty_add(type="SINGLE_ARROW", location=base_location_world)
         arrow = bpy.context.active_object
         arrow.name = "Booth Front Arrow"
         arrow.empty_display_type = "SINGLE_ARROW"
-        arrow.empty_display_size = 1.0
+        arrow.empty_display_size = marker_size
         arrow.rotation_mode = "QUATERNION"
         arrow.rotation_quaternion = self._quaternion_from_vectors(Vector((0.0, 0.0, 1.0)), axis_vector)
         arrow.parent = None
