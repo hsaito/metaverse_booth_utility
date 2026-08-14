@@ -140,8 +140,8 @@
             },
             {
               "name": "Max",
-              "width_m": 10.0,
-              "depth_m": 10.0,
+              "width_m": 20.0,
+              "depth_m": 20.0,
               "height_m": 30.0,
               "front_axis": "y-",
               "name_i18n": {
