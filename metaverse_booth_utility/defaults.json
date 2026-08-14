@@ -12,7 +12,7 @@
               "width_m": 4.0,
               "depth_m": 4.0,
               "height_m": 5.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "標準",
                 "es": "Estandar"
@@ -32,7 +32,7 @@
               "width_m": 1.0,
               "depth_m": 1.0,
               "height_m": 2.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "アイテム",
                 "es": "Articulo"
@@ -52,7 +52,7 @@
               "width_m": 2.0,
               "depth_m": 2.0,
               "height_m": 3.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "クロスプラットフォーム",
                 "es": "Multiplataforma"
@@ -72,7 +72,7 @@
               "width_m": 3.0,
               "depth_m": 6.3,
               "height_m": 5.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "ポピー横丁 (2026S)",
                 "es": "Calle Poppy (2026S)"
@@ -92,7 +92,7 @@
               "width_m": 10.0,
               "depth_m": 10.0,
               "height_m": 10.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "大",
                 "es": "Grande"
@@ -103,7 +103,7 @@
               "width_m": 30.0,
               "depth_m": 30.0,
               "height_m": 30.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "特大",
                 "es": "Extra Grande"
@@ -132,7 +132,7 @@
               "width_m": 10.0,
               "depth_m": 10.0,
               "height_m": 30.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "標準",
                 "es": "Estandar"
@@ -143,7 +143,7 @@
               "width_m": 20.0,
               "depth_m": 20.0,
               "height_m": 30.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "最大",
                 "es": "Maximo"
@@ -172,7 +172,7 @@
               "width_m": 4.0,
               "depth_m": 4.0,
               "height_m": 5.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "S",
                 "es": "S"
@@ -183,7 +183,7 @@
               "width_m": 5.0,
               "depth_m": 4.0,
               "height_m": 9.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "M",
                 "es": "M"
@@ -194,7 +194,7 @@
               "width_m": 10.0,
               "depth_m": 10.0,
               "height_m": 10.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "L",
                 "es": "L"
@@ -214,7 +214,7 @@
               "width_m": 1.0,
               "depth_m": 1.0,
               "height_m": 2.0,
-              "front_axis": "y-",
+              "front_axis": "y+",
               "name_i18n": {
                 "ja": "アイテム",
                 "es": "Articulo"
