@@ -105,3 +105,10 @@ This repository includes a GitHub Actions workflow that:
 - Packages `metaverse_booth_utility/` as a zip
 - Uploads the zip as a build artifact
 - Creates a GitHub Release asset when a `v*` tag is pushed
+
+## CI Validation
+This repository includes a GitHub Actions workflow that validates preset JSON schema compatibility:
+- Workflow: `.github/workflows/lint-defaults-schema.yml`
+- Runs on push to `main` (when preset/schema/workflow files change)
+- Runs on pull requests targeting `main` (same file scope)
+- Checks `metaverse_booth_utility/defaults.json` against `metaverse_booth_utility/defaults.schema.json`
