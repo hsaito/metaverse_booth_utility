@@ -489,7 +489,7 @@ bl_info = {
     "name": "Metaverse Booth Utility",
     "blender": (3, 6, 0),
     "category": "Object",
-    "version": (1, 1, 3),
+    "version": (1, 1, 4),
     "author": "Hideki Saito",
     "description": "Generate booth reference frames and front-direction arrows from configurable event presets.",
 }
@@ -613,7 +613,7 @@ class BoothConfigProperties(PropertyGroup):
     width_m: FloatProperty(name="Width (m)", default=1.0, min=0.1)
     depth_m: FloatProperty(name="Depth (m)", default=1.0, min=0.1)
     height_m: FloatProperty(name="Height (m)", default=1.0, min=0.01)
-    front_axis: EnumProperty(name="Front Axis", items=FRONT_AXIS_ITEMS, default="y+")
+    front_axis: EnumProperty(name="Front Axis", items=FRONT_AXIS_ITEMS, default="y-")
     advanced_open: bpy.props.BoolProperty(name="Advanced", default=False)
 
     def get_config_data(self):
