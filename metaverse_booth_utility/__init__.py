@@ -398,12 +398,12 @@ GENERATED_OBJECT_NAMES = (
     "Booth Arrow Tip",
 )
 FRONT_AXIS_ITEMS = (
-    ("x+", "+X", "Front points to +X"),
-    ("x-", "-X", "Front points to -X"),
-    ("y+", "+Y", "Front points to +Y"),
-    ("y-", "-Y", "Front points to -Y"),
-    ("z+", "+Z", "Front points to +Z"),
-    ("z-", "-Z", "Front points to -Z"),
+    ("x+", "x+", "Front points to +X"),
+    ("x-", "x-", "Front points to -X"),
+    ("y+", "y+", "Front points to +Y"),
+    ("y-", "y-", "Front points to -Y"),
+    ("z+", "z+", "Front points to +Z"),
+    ("z-", "z-", "Front points to -Z"),
 )
 
 
