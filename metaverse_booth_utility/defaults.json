@@ -2,12 +2,21 @@
   "events": [
     {
       "name": "Virtual Market",
+      "name_jaJP": "バーチャルマーケット",
+      "name_ja": "バーチャルマーケット",
+      "name_es": "Mercado Virtual",
       "variants": [
         {
           "name": "Space",
+          "name_jaJP": "スペース",
+          "name_ja": "スペース",
+          "name_es": "Espacio",
           "types": [
             {
               "name": "Standard",
+              "name_jaJP": "標準",
+              "name_ja": "標準",
+              "name_es": "Estandar",
               "width_m": 4.0,
               "depth_m": 4.0,
               "height_m": 5.0,
@@ -17,9 +26,15 @@
         },
         {
           "name": "Item",
+          "name_jaJP": "アイテム",
+          "name_ja": "アイテム",
+          "name_es": "Articulo",
           "types": [
             {
               "name": "Item",
+              "name_jaJP": "アイテム",
+              "name_ja": "アイテム",
+              "name_es": "Articulo",
               "width_m": 1.0,
               "depth_m": 1.0,
               "height_m": 2.0,
@@ -29,9 +44,15 @@
         },
         {
           "name": "Avatar",
+          "name_jaJP": "アバター",
+          "name_ja": "アバター",
+          "name_es": "Avatar",
           "types": [
             {
               "name": "Cross Platform",
+              "name_jaJP": "クロスプラットフォーム",
+              "name_ja": "クロスプラットフォーム",
+              "name_es": "Multiplataforma",
               "width_m": 2.0,
               "depth_m": 2.0,
               "height_m": 3.0,
@@ -41,9 +62,15 @@
         },
         {
             "name": "Special",
+            "name_jaJP": "スペシャル",
+            "name_ja": "スペシャル",
+            "name_es": "Especial",
             "types": [
             {
-                "name": "Special (2026S Poppy Street)",
+                "name": "Poppy Street (2026S)",
+                "name_jaJP": "ポピー横丁 (2026S)",
+                "name_ja": "ポピー横丁 (2026S)",
+                "name_es": "Calle Poppy (2026S)",
                 "width_m": 3.0,
                 "depth_m": 6.3,
                 "height_m": 5.0,
@@ -53,9 +80,15 @@
         },
         {
             "name": "Legacy",
+            "name_jaJP": "レガシー",
+            "name_ja": "レガシー",
+            "name_es": "Legado",
             "types": [
             {
               "name": "Large",
+              "name_jaJP": "ラージ",
+              "name_ja": "ラージ",
+              "name_es": "Grande",
               "width_m": 10.0,
               "depth_m": 10.0,
               "height_m": 10.0,
@@ -63,6 +96,9 @@
             },
             {
               "name": "Extra Large",
+              "name_jaJP": "エクストララージ",
+              "name_ja": "エクストララージ",
+              "name_es": "Extra Grande",
               "width_m": 30.0,
               "depth_m": 30.0,
               "height_m": 30.0,
@@ -74,12 +110,21 @@
     },
     {
       "name": "Taneket",
+      "name_jaJP": "たねケット",
+      "name_ja": "たねケット",
+      "name_es": "Taneket",
       "variants": [
         {
           "name": "Booth",
+          "name_jaJP": "ブース",
+          "name_ja": "ブース",
+          "name_es": "Booth",
           "types": [
             {
               "name": "Standard",
+              "name_jaJP": "標準",
+              "name_ja": "標準",
+              "name_es": "Estandar",
               "width_m": 10.0,
               "depth_m": 10.0,
               "height_m": 30.0,
@@ -87,6 +132,9 @@
             },
             {
               "name": "Max",
+              "name_jaJP": "最大",
+              "name_ja": "最大",
+              "name_es": "Maximo",
               "width_m": 10.0,
               "depth_m": 10.0,
               "height_m": 30.0,
@@ -98,12 +146,21 @@
     },
     {
       "name": "Casmarket",
+      "name_jaJP": "キャスマーケット",
+      "name_ja": "キャスマーケット",
+      "name_es": "Casmarket",
       "variants": [
         {
           "name": "Booth",
+          "name_jaJP": "ブース",
+          "name_ja": "ブース",
+          "name_es": "Booth",
           "types": [
             {
               "name": "S",
+              "name_jaJP": "S",
+              "name_ja": "S",
+              "name_es": "S",
               "width_m": 4.0,
               "depth_m": 4.0,
               "height_m": 5.0,
@@ -111,6 +168,9 @@
             },
             {
               "name": "M",
+              "name_jaJP": "M",
+              "name_ja": "M",
+              "name_es": "M",
               "width_m": 5.0,
               "depth_m": 4.0,
               "height_m": 9.0,
@@ -118,6 +178,9 @@
             },
             {
               "name": "L",
+              "name_jaJP": "L",
+              "name_ja": "L",
+              "name_es": "L",
               "width_m": 10.0,
               "depth_m": 10.0,
               "height_m": 10.0,
@@ -127,9 +190,15 @@
         },
         {
           "name": "Item",
+          "name_jaJP": "アイテム",
+          "name_ja": "アイテム",
+          "name_es": "Articulo",
           "types": [
             {
               "name": "Item",
+              "name_jaJP": "アイテム",
+              "name_ja": "アイテム",
+              "name_es": "Articulo",
               "width_m": 1.0,
               "depth_m": 1.0,
               "height_m": 2.0,
