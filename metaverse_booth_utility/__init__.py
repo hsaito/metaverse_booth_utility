@@ -614,6 +614,8 @@ class BOOTH_OT_generate_frame(Operator):
         frame_obj.location = (0.0, 0.0, height / 2.0)
         frame_obj.rotation_euler = (0.0, 0.0, 0.0)
         frame_obj.scale = (width / 2.0, depth / 2.0, height / 2.0)
+        # Bake dimensions into mesh so the reference object does not keep non-uniform scale.
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
         frame_obj.display_type = "WIRE"
         frame_obj.show_wire = True
         frame_obj.show_in_front = True
