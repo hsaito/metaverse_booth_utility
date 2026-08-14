@@ -64,6 +64,41 @@ UI_TRANSLATIONS = {
         "ja": "生成物を削除",
         "es": "Eliminar generados",
     },
+    "show_frame": {
+        "en": "Show Frame",
+        "ja": "フレームを表示",
+        "es": "Mostrar marco",
+    },
+    "hide_frame": {
+        "en": "Hide Frame",
+        "ja": "フレームを非表示",
+        "es": "Ocultar marco",
+    },
+    "show_arrow": {
+        "en": "Show Arrow",
+        "ja": "矢印を表示",
+        "es": "Mostrar flecha",
+    },
+    "hide_arrow": {
+        "en": "Hide Arrow",
+        "ja": "矢印を非表示",
+        "es": "Ocultar flecha",
+    },
+    "toggle_target_missing": {
+        "en": "No generated {target} object found",
+        "ja": "生成済みの{target}オブジェクトが見つかりません",
+        "es": "No se encontro un objeto generado de {target}",
+    },
+    "frame": {
+        "en": "frame",
+        "ja": "フレーム",
+        "es": "marco",
+    },
+    "arrow": {
+        "en": "arrow",
+        "ja": "矢印",
+        "es": "flecha",
+    },
     "invalid_preset_json": {
         "en": "Invalid preset JSON",
         "ja": "プリセットJSONが不正です",
@@ -249,6 +284,18 @@ def get_item_name(item):
     if isinstance(name, str):
         return name
     return ""
+
+
+def get_frame_object():
+    return bpy.data.objects.get("Booth Frame Reference")
+
+
+def get_arrow_object():
+    return bpy.data.objects.get("Booth Front Arrow")
+
+
+def is_object_visible(obj):
+    return bool(obj) and not obj.hide_viewport
 
 
 def find_event(config_data, event_name):
@@ -738,6 +785,36 @@ class BOOTH_OT_remove_generated(Operator):
         return {"FINISHED"}
 
 
+class BOOTH_OT_toggle_frame_visibility(Operator):
+    bl_idname = "booth.toggle_frame_visibility"
+    bl_label = "Toggle Frame Visibility"
+    bl_description = "Show or hide the generated booth frame"
+
+    def execute(self, context):
+        frame_obj = get_frame_object()
+        if not frame_obj:
+            self.report({"WARNING"}, tr("toggle_target_missing").format(target=tr("frame")))
+            return {"CANCELLED"}
+
+        frame_obj.hide_viewport = not frame_obj.hide_viewport
+        return {"FINISHED"}
+
+
+class BOOTH_OT_toggle_arrow_visibility(Operator):
+    bl_idname = "booth.toggle_arrow_visibility"
+    bl_label = "Toggle Arrow Visibility"
+    bl_description = "Show or hide the generated front arrow"
+
+    def execute(self, context):
+        arrow_obj = get_arrow_object()
+        if not arrow_obj:
+            self.report({"WARNING"}, tr("toggle_target_missing").format(target=tr("arrow")))
+            return {"CANCELLED"}
+
+        arrow_obj.hide_viewport = not arrow_obj.hide_viewport
+        return {"FINISHED"}
+
+
 class BOOTH_OT_select_event(Operator):
     bl_idname = "booth.select_event"
     bl_label = "Select Event"
@@ -868,6 +945,15 @@ class BOOTH_PT_panel(Panel):
         row.operator("booth.generate_frame", text=tr("generate"))
         row.operator("booth.reset_config", text=tr("reset"))
 
+        frame_obj = get_frame_object()
+        arrow_obj = get_arrow_object()
+
+        visibility_row = layout.row()
+        frame_label = tr("hide_frame") if is_object_visible(frame_obj) else tr("show_frame")
+        arrow_label = tr("hide_arrow") if is_object_visible(arrow_obj) else tr("show_arrow")
+        visibility_row.operator("booth.toggle_frame_visibility", text=frame_label)
+        visibility_row.operator("booth.toggle_arrow_visibility", text=arrow_label)
+
         layout.operator("booth.remove_generated", text=tr("remove_generated"))
 
         if not validate_config_text(props):
@@ -897,6 +983,8 @@ classes = (
     BOOTH_OT_generate_frame,
     BOOTH_OT_reset_config,
     BOOTH_OT_remove_generated,
+    BOOTH_OT_toggle_frame_visibility,
+    BOOTH_OT_toggle_arrow_visibility,
     BOOTH_OT_select_event,
     BOOTH_OT_select_variant,
     BOOTH_OT_select_type,
