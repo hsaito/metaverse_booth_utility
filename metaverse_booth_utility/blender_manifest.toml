@@ -9,7 +9,7 @@ type = "add-on"
 
 blender_version_min = "3.6.0"
 
-license = ["SPDX:GPL-2.0-or-later"]
+license = ["SPDX:GPL-3.0-or-later"]
 
 website = "https://github.com/hsaito/Metaverse_Booth_Utility"
 documentation = "https://github.com/hsaito/Metaverse_Booth_Utility/blob/main/README.md"
