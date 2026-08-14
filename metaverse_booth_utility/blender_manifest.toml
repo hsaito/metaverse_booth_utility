@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "metaverse_booth_utility"
-version = "1.1.2"
+version = "1.1.3"
 name = "Metaverse Booth Utility"
 tagline = "Generate booth reference frames from preset definitions"
 maintainer = "Hideki Saito"
@@ -9,7 +9,7 @@ type = "add-on"
 
 blender_version_min = "3.6.0"
 
-license = ["SPDX:GPL-2.0-or-later"]
+license = ["SPDX:GPL-3.0-or-later"]
 
 website = "https://github.com/hsaito/Metaverse_Booth_Utility"
 documentation = "https://github.com/hsaito/Metaverse_Booth_Utility/blob/main/README.md"

@@ -1,3 +1,9 @@
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+
 import json
 import math
 import os
@@ -294,6 +300,44 @@ def get_arrow_object():
     return bpy.data.objects.get("Booth Front Arrow")
 
 
+def get_generated_collection(context=None):
+    if context and getattr(context, "scene", None):
+        scene_collection = context.scene.collection
+        for child in scene_collection.children:
+            if child.name == GENERATED_COLLECTION_NAME:
+                return child
+
+    return bpy.data.collections.get(GENERATED_COLLECTION_NAME)
+
+
+def ensure_generated_collection(context):
+    generated_collection = get_generated_collection(context)
+    if generated_collection:
+        return generated_collection
+
+    generated_collection = bpy.data.collections.new(GENERATED_COLLECTION_NAME)
+
+    scene = getattr(context, "scene", None)
+    if scene:
+        scene_collection = scene.collection
+        if scene_collection.children.get(generated_collection.name) is None:
+            scene_collection.children.link(generated_collection)
+
+    return generated_collection
+
+
+def move_object_to_collection(obj, target_collection):
+    if not obj or not target_collection:
+        return
+
+    if target_collection not in obj.users_collection:
+        target_collection.objects.link(obj)
+
+    for collection in list(obj.users_collection):
+        if collection != target_collection:
+            collection.objects.unlink(obj)
+
+
 def is_object_visible(obj):
     return bool(obj) and not obj.hide_viewport
 
@@ -445,7 +489,7 @@ bl_info = {
     "name": "Metaverse Booth Utility",
     "blender": (3, 6, 0),
     "category": "Object",
-    "version": (1, 1, 2),
+    "version": (1, 1, 3),
     "author": "Hideki Saito",
     "description": "Generate booth reference frames and front-direction arrows from configurable event presets.",
 }
@@ -459,6 +503,7 @@ GENERATED_OBJECT_NAMES = (
     "Booth Arrow Shaft",
     "Booth Arrow Tip",
 )
+GENERATED_COLLECTION_NAME = "Metaverse Booth Utility Generated"
 FRONT_AXIS_ITEMS = (
     ("x+", "x+", "Front points to +X"),
     ("x-", "x-", "Front points to -X"),
@@ -609,10 +654,11 @@ class BOOTH_OT_generate_frame(Operator):
         depth = float(props.depth_m)
         height = float(props.height_m)
         front_axis = normalize_front_axis(props.front_axis)
+        generated_collection = ensure_generated_collection(context)
 
         self._remove_existing_objects()
-        frame_obj = self._create_frame(width, depth, height, event_name, variant_name, preset_name)
-        self._create_front_arrow(frame_obj, width, depth, height, front_axis)
+        frame_obj = self._create_frame(width, depth, height, event_name, variant_name, preset_name, generated_collection)
+        self._create_front_arrow(frame_obj, width, depth, height, front_axis, generated_collection)
 
         self.report(
             {"INFO"},
@@ -654,10 +700,12 @@ class BOOTH_OT_generate_frame(Operator):
             if obj:
                 bpy.data.objects.remove(obj, do_unlink=True)
 
-    def _create_frame(self, width, depth, height, event_name, variant_name, type_name):
+    def _create_frame(self, width, depth, height, event_name, variant_name, type_name, generated_collection):
         bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 0.0), size=2.0)
         frame_obj = bpy.context.active_object
         frame_obj.name = "Booth Frame Reference"
+        if frame_obj.data:
+            frame_obj.data.name = "Booth Frame Reference Mesh"
         frame_obj.location = (0.0, 0.0, height / 2.0)
         frame_obj.rotation_euler = (0.0, 0.0, 0.0)
         frame_obj.scale = (width / 2.0, depth / 2.0, height / 2.0)
@@ -678,9 +726,10 @@ class BOOTH_OT_generate_frame(Operator):
         frame_obj["booth_width_m"] = width
         frame_obj["booth_depth_m"] = depth
         frame_obj["booth_height_m"] = height
+        move_object_to_collection(frame_obj, generated_collection)
         return frame_obj
 
-    def _create_front_arrow(self, frame_obj, width, depth, height, front_axis):
+    def _create_front_arrow(self, frame_obj, width, depth, height, front_axis, generated_collection):
         normalized_axis = normalize_front_axis(front_axis)
         axis_vector = self._axis_to_vector(normalized_axis)
 
@@ -714,6 +763,7 @@ class BOOTH_OT_generate_frame(Operator):
         arrow.lock_scale = (True, True, True)
         arrow.show_axis = False
         arrow["booth_generated"] = True
+        move_object_to_collection(arrow, generated_collection)
 
         bpy.context.view_layer.update()
 
@@ -780,6 +830,10 @@ class BOOTH_OT_remove_generated(Operator):
             if obj.get("booth_generated") or obj.name in GENERATED_OBJECT_NAMES:
                 bpy.data.objects.remove(obj, do_unlink=True)
                 removed_count += 1
+
+        generated_collection = get_generated_collection(context)
+        if generated_collection and not generated_collection.objects and not generated_collection.children:
+            bpy.data.collections.remove(generated_collection)
 
         self.report({"INFO"}, tr("removed_generated").format(count=removed_count))
         return {"FINISHED"}
