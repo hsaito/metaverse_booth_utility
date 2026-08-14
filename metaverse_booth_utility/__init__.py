@@ -130,7 +130,7 @@ def get_effective_ui_locale():
     return str(locale_code or "en_US")
 
 
-def get_locale_suffixes(locale_code=None):
+def get_locale_codes(locale_code=None):
     locale_code = str(locale_code or get_effective_ui_locale()).strip()
     if not locale_code:
         return []
@@ -147,19 +147,69 @@ def get_locale_suffixes(locale_code=None):
             candidates.append(value)
 
     append_unique(normalized)
+    append_unique(normalized.replace("_", "-"))
     append_unique(normalized.replace("_", ""))
     if language and region:
+        append_unique(f"{language}_{region.upper()}")
+        append_unique(f"{language}_{region.lower()}")
+        append_unique(f"{language}-{region.upper()}")
+        append_unique(f"{language}-{region.lower()}")
         append_unique(f"{language}{region.upper()}")
         append_unique(f"{language}{region.lower()}")
     append_unique(language)
     return candidates
 
 
+def normalize_locale_key(value):
+    value = str(value or "").strip()
+    if not value:
+        return ""
+    value = value.replace("_", "-")
+    parts = value.split("-")
+    if not parts:
+        return ""
+    language = parts[0].lower()
+    if len(parts) == 1:
+        return language
+    tail = []
+    for segment in parts[1:]:
+        if len(segment) <= 3:
+            tail.append(segment.upper())
+        else:
+            tail.append(segment)
+    return "-".join([language] + tail)
+
+
+def get_i18n_value(i18n_map, locale_code=None):
+    if not isinstance(i18n_map, dict):
+        return ""
+
+    normalized_map = {}
+    for key, value in i18n_map.items():
+        normalized_key = normalize_locale_key(key)
+        if normalized_key and isinstance(value, str) and value.strip() and normalized_key not in normalized_map:
+            normalized_map[normalized_key] = value
+
+    for candidate in get_locale_codes(locale_code):
+        normalized_candidate = normalize_locale_key(candidate)
+        value = normalized_map.get(normalized_candidate)
+        if isinstance(value, str) and value.strip():
+            return value
+
+    return ""
+
+
 def get_localized_name(item, locale_code=None):
     if not isinstance(item, dict):
         return ""
 
-    for suffix in get_locale_suffixes(locale_code):
+    i18n_map = item.get("name_i18n")
+    i18n_value = get_i18n_value(i18n_map, locale_code)
+    if i18n_value:
+        return i18n_value
+
+    # Backward compatibility with legacy keys like name_jaJP/name_ja/name_es.
+    for suffix in get_locale_codes(locale_code):
         key = f"name_{suffix}"
         value = item.get(key)
         if isinstance(value, str) and value.strip():

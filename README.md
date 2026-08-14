@@ -34,13 +34,13 @@ Presets are loaded from `metaverse_booth_utility/defaults.json`.
 Structure overview:
 - `events[]`
 - `events[].name`
-- `events[].name_jaJP` / `events[].name_ja` / `events[].name_es` (optional localized labels)
+- `events[].name_i18n` (optional localized label map)
 - `events[].variants[]`
 - `events[].variants[].name`
-- `events[].variants[].name_jaJP` / `events[].variants[].name_ja` / `events[].variants[].name_es` (optional localized labels)
+- `events[].variants[].name_i18n` (optional localized label map)
 - `events[].variants[].types[]`
 - `events[].variants[].types[].name`
-- `events[].variants[].types[].name_jaJP` / `events[].variants[].types[].name_ja` / `events[].variants[].types[].name_es` (optional localized labels)
+- `events[].variants[].types[].name_i18n` (optional localized label map)
 - `events[].variants[].types[].width_m`
 - `events[].variants[].types[].depth_m`
 - `events[].variants[].types[].height_m`
@@ -49,8 +49,12 @@ Structure overview:
 Localization behavior:
 - `name` is always the canonical/fallback English key used internally.
 - UI display name is chosen based on Blender language.
-- For Japanese, both `name_jaJP` and `name_ja` are accepted.
+- `name_i18n` accepts arbitrary language/locale keys, for example `ja`, `es`, `ja-JP`, `en-GB`.
 - If no language-specific key is found, the add-on falls back to `name`.
+
+Schema:
+- `metaverse_booth_utility/defaults.schema.json` validates this format.
+- `defaults.json` includes `$schema` for editor-assisted validation.
 
 Example:
 
@@ -59,19 +63,24 @@ Example:
    "events": [
       {
          "name": "Virtual Market",
-         "name_jaJP": "バーチャルマーケット",
-         "name_ja": "バーチャルマーケット",
-         "name_es": "Mercado Virtual",
+         "name_i18n": {
+            "ja": "バーチャルマーケット",
+            "es": "Mercado Virtual"
+         },
          "variants": [
             {
                "name": "Space",
-               "name_ja": "スペース",
-               "name_es": "Espacio",
+               "name_i18n": {
+                  "ja": "スペース",
+                  "es": "Espacio"
+               },
                "types": [
                   {
                      "name": "Standard",
-                     "name_ja": "標準",
-                     "name_es": "Estandar",
+                     "name_i18n": {
+                        "ja": "標準",
+                        "es": "Estandar"
+                     },
                      "width_m": 4.0,
                      "depth_m": 4.0,
                      "height_m": 5.0,
