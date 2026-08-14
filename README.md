@@ -8,6 +8,7 @@ Metaverse Booth Utility is a Blender add-on for quickly generating a booth refer
 - UI labels follow Blender UI language (`English`, `Japanese`, `Spanish`)
 - Auto-filled booth dimensions from JSON presets
 - Front-axis preview and generation support (`x+`, `x-`, `y+`, `y-`, `z+`, `z-`)
+- Generated helper objects are grouped in `Metaverse Booth Utility Generated` collection
 - One-click removal of generated helper objects
 
 ## Requirements
@@ -26,7 +27,9 @@ Metaverse Booth Utility is a Blender add-on for quickly generating a booth refer
 3. Click `Generate` to create helper objects:
     - `Booth Frame Reference`
     - `Booth Front Arrow`
+   The helper objects are created in `Metaverse Booth Utility Generated` collection.
 4. Click `Remove Generated` to clean up generated helpers.
+   If the generated collection is empty afterward, it is also removed.
 
 ## Preset JSON
 Presets are loaded from `metaverse_booth_utility/defaults.json`.
