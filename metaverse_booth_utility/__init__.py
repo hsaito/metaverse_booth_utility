@@ -84,6 +84,21 @@ UI_TRANSLATIONS = {
         "ja": "前方向軸",
         "es": "Eje frontal",
     },
+    "width_m": {
+        "en": "Width (m)",
+        "ja": "幅 (m)",
+        "es": "Ancho (m)",
+    },
+    "depth_m": {
+        "en": "Depth (m)",
+        "ja": "奥行き (m)",
+        "es": "Profundidad (m)",
+    },
+    "height_m": {
+        "en": "Height (m)",
+        "ja": "高さ (m)",
+        "es": "Altura (m)",
+    },
     "unable_to_load_preset_json": {
         "en": "Unable to load preset JSON",
         "ja": "プリセットJSONを読み込めません",
@@ -831,10 +846,10 @@ class BOOTH_PT_panel(Panel):
         advanced_box = layout.box()
         advanced_box.prop(props, "advanced_open", text=tr("advanced"), icon="TRIA_DOWN" if props.advanced_open else "TRIA_RIGHT")
         if props.advanced_open:
-            advanced_box.prop(props, "width_m")
-            advanced_box.prop(props, "depth_m")
-            advanced_box.prop(props, "height_m")
-            advanced_box.prop(props, "front_axis")
+            advanced_box.prop(props, "width_m", text=tr("width_m"))
+            advanced_box.prop(props, "depth_m", text=tr("depth_m"))
+            advanced_box.prop(props, "height_m", text=tr("height_m"))
+            advanced_box.prop(props, "front_axis", text=tr("front_axis"))
 
         row = layout.row()
         row.operator("booth.generate_frame", text=tr("generate"))
