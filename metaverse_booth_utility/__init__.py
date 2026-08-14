@@ -941,14 +941,14 @@ class BOOTH_PT_panel(Panel):
             advanced_box.prop(props, "height_m", text=tr("height_m"))
             advanced_box.prop(props, "front_axis", text=tr("front_axis"))
 
-        row = layout.row()
-        row.operator("booth.generate_frame", text=tr("generate"))
-        row.operator("booth.reset_config", text=tr("reset"))
+        action_row = layout.row(align=True)
+        action_row.operator("booth.generate_frame", text=tr("generate"), icon="CHECKMARK")
+        action_row.operator("booth.reset_config", text=tr("reset"), icon="LOOP_BACK")
 
         frame_obj = get_frame_object()
         arrow_obj = get_arrow_object()
 
-        visibility_row = layout.row()
+        visibility_row = layout.row(align=True)
         frame_label = tr("hide_frame") if is_object_visible(frame_obj) else tr("show_frame")
         arrow_label = tr("hide_arrow") if is_object_visible(arrow_obj) else tr("show_arrow")
         visibility_row.operator("booth.toggle_frame_visibility", text=frame_label)
