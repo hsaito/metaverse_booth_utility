@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/hsaito/Metaverse_Booth_Utility/metaverse_booth_utility/defaults.schema.json",
+  "title": "Metaverse Booth Utility Preset Schema",
+  "description": "Schema for booth preset configuration used by Metaverse Booth Utility.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "events"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    }
+  },
+  "$defs": {
+    "localizedNameMap": {
+      "type": "object",
+      "description": "Localized name map keyed by language/locale code, for example: ja, es, ja-JP, en-GB.",
+      "patternProperties": {
+        "^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "typePreset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "width_m",
+        "depth_m",
+        "height_m",
+        "front_axis"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Canonical fallback (typically English) and stable internal identifier."
+        },
+        "name_i18n": {
+          "$ref": "#/$defs/localizedNameMap"
+        },
+        "width_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "depth_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "front_axis": {
+          "type": "string",
+          "enum": [
+            "x+",
+            "x-",
+            "y+",
+            "y-",
+            "z+",
+            "z-"
+          ]
+        }
+      }
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "types"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name_i18n": {
+          "$ref": "#/$defs/localizedNameMap"
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/typePreset"
+          }
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "variants"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name_i18n": {
+          "$ref": "#/$defs/localizedNameMap"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/variant"
+          }
+        }
+      }
+    }
+  }
+}
