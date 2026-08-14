@@ -348,12 +348,12 @@ GENERATED_OBJECT_NAMES = (
     "Booth Arrow Tip",
 )
 FRONT_AXIS_ITEMS = (
-    ("x", "+X", "Front points to +X"),
-    ("-x", "-X", "Front points to -X"),
-    ("y", "+Y", "Front points to +Y"),
-    ("-y", "-Y", "Front points to -Y"),
-    ("z", "+Z", "Front points to +Z"),
-    ("-z", "-Z", "Front points to -Z"),
+    ("x+", "+X", "Front points to +X"),
+    ("x-", "-X", "Front points to -X"),
+    ("y+", "+Y", "Front points to +Y"),
+    ("y-", "-Y", "Front points to -Y"),
+    ("z+", "+Z", "Front points to +Z"),
+    ("z-", "-Z", "Front points to -Z"),
 )
 
 
@@ -394,10 +394,22 @@ def validate_config_text(props):
 
 def normalize_front_axis(value):
     value = str(value or "").strip().lower()
+    legacy_aliases = {
+        "x": "x+",
+        "+x": "x+",
+        "-x": "x-",
+        "y": "y+",
+        "+y": "y+",
+        "-y": "y-",
+        "z": "z+",
+        "+z": "z+",
+        "-z": "z-",
+    }
+    value = legacy_aliases.get(value, value)
     valid_axes = {item[0] for item in FRONT_AXIS_ITEMS}
     if value in valid_axes:
         return value
-    return "-y"
+    return "y-"
 
 
 def show_invalid_json_popup(context, message):
@@ -444,7 +456,7 @@ class BoothConfigProperties(PropertyGroup):
     width_m: FloatProperty(name="Width (m)", default=1.0, min=0.1)
     depth_m: FloatProperty(name="Depth (m)", default=1.0, min=0.1)
     height_m: FloatProperty(name="Height (m)", default=1.0, min=0.01)
-    front_axis: EnumProperty(name="Front Axis", items=FRONT_AXIS_ITEMS, default="-y")
+    front_axis: EnumProperty(name="Front Axis", items=FRONT_AXIS_ITEMS, default="y-")
     advanced_open: bpy.props.BoolProperty(name="Advanced", default=False)
 
     def get_config_data(self):
@@ -581,13 +593,14 @@ class BOOTH_OT_generate_frame(Operator):
         bpy.context.view_layer.update()
 
     def _axis_to_vector(self, axis):
+        axis = normalize_front_axis(axis)
         mapping = {
-            "x": Vector((1.0, 0.0, 0.0)),
-            "-x": Vector((-1.0, 0.0, 0.0)),
-            "y": Vector((0.0, 1.0, 0.0)),
-            "-y": Vector((0.0, -1.0, 0.0)),
-            "z": Vector((0.0, 0.0, 1.0)),
-            "-z": Vector((0.0, 0.0, -1.0)),
+            "x+": Vector((1.0, 0.0, 0.0)),
+            "x-": Vector((-1.0, 0.0, 0.0)),
+            "y+": Vector((0.0, 1.0, 0.0)),
+            "y-": Vector((0.0, -1.0, 0.0)),
+            "z+": Vector((0.0, 0.0, 1.0)),
+            "z-": Vector((0.0, 0.0, -1.0)),
         }
         return mapping.get(axis, Vector((0.0, -1.0, 0.0)))
 
@@ -626,7 +639,7 @@ class BOOTH_OT_reset_config(Operator):
         props.width_m = 1.0
         props.depth_m = 1.0
         props.height_m = 1.0
-        props.front_axis = "-y"
+        props.front_axis = "y-"
         self.report({"INFO"}, tr("reset_selection"))
         return {"FINISHED"}
 
@@ -796,7 +809,7 @@ class BOOTH_PT_panel(Panel):
         if selected:
             box = layout.box()
             box.label(text=f"{tr('size')}: {selected.get('width_m', 0)} x {selected.get('depth_m', 0)} x {selected.get('height_m', 0)} m")
-            box.label(text=f"{tr('front_axis')}: {selected.get('front_axis', '-y')}")
+            box.label(text=f"{tr('front_axis')}: {normalize_front_axis(selected.get('front_axis', 'y-'))}")
         else:
             layout.label(text=tr("select_preset_preview"))
 

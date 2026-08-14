@@ -7,7 +7,7 @@ Metaverse Booth Utility is a Blender add-on for quickly generating a booth refer
 - Event -> variant -> type preset selection
 - UI labels follow Blender UI language (`English`, `Japanese`, `Spanish`)
 - Auto-filled booth dimensions from JSON presets
-- Front-axis preview and generation support (`x`, `-x`, `y`, `-y`, `z`, `-z`)
+- Front-axis preview and generation support (`x+`, `x-`, `y+`, `y-`, `z+`, `z-`)
 - One-click removal of generated helper objects
 
 ## Requirements
@@ -75,7 +75,7 @@ Example:
                      "width_m": 4.0,
                      "depth_m": 4.0,
                      "height_m": 5.0,
-                     "front_axis": "-y"
+                     "front_axis": "y-"
                   }
                ]
             }
