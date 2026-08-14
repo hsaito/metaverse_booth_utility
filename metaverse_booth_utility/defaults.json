@@ -94,7 +94,7 @@
               "height_m": 10.0,
               "front_axis": "y-",
               "name_i18n": {
-                "ja": "ラージ",
+                "ja": "大",
                 "es": "Grande"
               }
             },
@@ -105,7 +105,7 @@
               "height_m": 30.0,
               "front_axis": "y-",
               "name_i18n": {
-                "ja": "エクストララージ",
+                "ja": "特大",
                 "es": "Extra Grande"
               }
             }
