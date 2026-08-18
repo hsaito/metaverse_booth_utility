@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "metaverse_booth_utility"
-version = "1.2.0"
+version = "1.2.1"
 name = "Metaverse Booth Utility"
 tagline = "Generate booth reference frames from preset definitions"
 maintainer = "Hideki Saito"
