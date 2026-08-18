@@ -428,7 +428,18 @@ def find_type(variant_data, type_name):
     return None
 
 
-def is_legacy_variant(variant_data):
+def is_legacy_event(event_data):
+    if not isinstance(event_data, dict):
+        return False
+
+    legacy_value = event_data.get("legacy")
+    if isinstance(legacy_value, bool):
+        return legacy_value
+
+    return False
+
+
+def is_legacy_variant(variant_data, event_data=None):
     if not isinstance(variant_data, dict):
         return False
 
@@ -436,11 +447,14 @@ def is_legacy_variant(variant_data):
     if isinstance(legacy_value, bool):
         return legacy_value
 
+    if is_legacy_event(event_data):
+        return True
+
     # Backward compatibility for preset files that use a dedicated "Legacy" variant.
     return get_item_name(variant_data).strip().lower() == "legacy"
 
 
-def is_legacy_type(preset_data, variant_data=None):
+def is_legacy_type(preset_data, variant_data=None, event_data=None):
     if not isinstance(preset_data, dict):
         return False
 
@@ -448,16 +462,16 @@ def is_legacy_type(preset_data, variant_data=None):
     if isinstance(legacy_value, bool):
         return legacy_value
 
-    return is_legacy_variant(variant_data)
+    return is_legacy_variant(variant_data, event_data)
 
 
-def get_selectable_types(variant_data, show_legacy):
+def get_selectable_types(variant_data, show_legacy, event_data=None):
     if not isinstance(variant_data, dict):
         return []
 
     selectable = []
     for preset in variant_data.get("types", []):
-        if is_legacy_type(preset, variant_data) and not show_legacy:
+        if is_legacy_type(preset, variant_data, event_data) and not show_legacy:
             continue
         if not get_item_name(preset):
             continue
@@ -469,13 +483,16 @@ def get_selectable_variants(event_data, show_legacy):
     if not isinstance(event_data, dict):
         return []
 
+    if is_legacy_event(event_data) and not show_legacy:
+        return []
+
     selectable = []
     for variant in event_data.get("variants", []):
-        if is_legacy_variant(variant) and not show_legacy:
+        if is_legacy_variant(variant, event_data) and not show_legacy:
             continue
         if not get_item_name(variant):
             continue
-        if not get_selectable_types(variant, show_legacy):
+        if not get_selectable_types(variant, show_legacy, event_data):
             continue
         selectable.append(variant)
     return selectable
@@ -492,7 +509,7 @@ def get_selectable_events(config_data, show_legacy):
     return selectable
 
 
-def apply_preset_to_properties(props, preset, variant=None):
+def apply_preset_to_properties(props, preset, variant=None, event=None):
     if not isinstance(preset, dict):
         return
 
@@ -500,7 +517,7 @@ def apply_preset_to_properties(props, preset, variant=None):
     props.depth_m = float(preset.get("depth_m", props.depth_m))
     props.height_m = float(preset.get("height_m", props.height_m))
     props.front_axis = normalize_front_axis(preset.get("front_axis", props.front_axis))
-    props.selected_type_is_legacy = is_legacy_type(preset, variant)
+    props.selected_type_is_legacy = is_legacy_type(preset, variant, event)
 
 
 def reset_preset_selection_state(props):
@@ -561,7 +578,7 @@ def normalize_selection_to_first_valid(props, config_data=None):
         props.type_name = ""
         return
 
-    selectable_types = get_selectable_types(variant, props.show_legacy)
+    selectable_types = get_selectable_types(variant, props.show_legacy, event)
     if not selectable_types:
         props.type_name = ""
         return
@@ -576,7 +593,7 @@ def normalize_selection_to_first_valid(props, config_data=None):
         preset = find_type(variant, props.type_name)
 
     if preset:
-        apply_preset_to_properties(props, preset, variant)
+        apply_preset_to_properties(props, preset, variant, event)
 
 
 def sync_selected_legacy_flag(props, config_data=None):
@@ -600,7 +617,7 @@ def sync_selected_legacy_flag(props, config_data=None):
     if not preset:
         return
 
-    props.selected_type_is_legacy = is_legacy_type(preset, variant)
+    props.selected_type_is_legacy = is_legacy_type(preset, variant, event)
 
 
 def update_show_legacy(props, context):
@@ -682,7 +699,7 @@ def get_type_menu_items(props):
         return []
 
     items = []
-    for preset in get_selectable_types(variant, props.show_legacy):
+    for preset in get_selectable_types(variant, props.show_legacy, event):
         name = get_item_name(preset)
         items.append((name, get_localized_name(preset)))
     return items
@@ -722,7 +739,7 @@ def get_type_names(props):
 
     variant = find_variant(event, props.variant_name)
     if variant:
-        return [get_item_name(item) for item in get_selectable_types(variant, props.show_legacy)]
+        return [get_item_name(item) for item in get_selectable_types(variant, props.show_legacy, event)]
     return []
 
 bl_info = {
@@ -902,7 +919,7 @@ class BOOTH_OT_generate_frame(Operator):
             event_display = get_localized_name(event)
             variant_display = get_localized_name(variant)
             preset_display = get_localized_name(preset)
-            selected_is_legacy = is_legacy_type(preset, variant)
+            selected_is_legacy = is_legacy_type(preset, variant, event)
         else:
             event_name = props.event_name or tr("manual")
             variant_name = props.variant_name or tr("custom")
@@ -1192,7 +1209,7 @@ class BOOTH_OT_select_type(Operator):
 
         preset = find_type(variant, props.type_name)
         if preset:
-            apply_preset_to_properties(props, preset, variant)
+            apply_preset_to_properties(props, preset, variant, event)
             return {"FINISHED"}
         props.selected_type_is_legacy = False
         return {"FINISHED"}
@@ -1298,7 +1315,7 @@ class BOOTH_PT_panel(Panel):
         selected = find_type(variant, props.type_name) if variant else None
         selected_visible = bool(
             selected
-            and (props.show_legacy or not is_legacy_type(selected, variant))
+            and (props.show_legacy or not is_legacy_type(selected, variant, event))
         )
 
         if selected_visible:

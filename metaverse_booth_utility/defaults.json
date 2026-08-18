@@ -69,6 +69,7 @@
           "types": [
             {
               "name": "Poppy Street (2026S)",
+              "legacy": true,
               "width_m": 3.0,
               "depth_m": 6.3,
               "height_m": 5.0,
@@ -77,17 +78,7 @@
                 "ja": "ポピー横丁 (2026S)",
                 "es": "Calle Poppy (2026S)"
               }
-            }
-          ],
-          "name_i18n": {
-            "ja": "スペシャル",
-            "es": "Especial"
-          }
-        },
-        {
-          "name": "Legacy",
-          "legacy": true,
-          "types": [
+            },
             {
               "name": "Large",
               "legacy": true,
@@ -114,8 +105,8 @@
             }
           ],
           "name_i18n": {
-            "ja": "レガシー",
-            "es": "Legado"
+            "ja": "スペシャル",
+            "es": "Especial"
           }
         }
       ],
@@ -166,6 +157,7 @@
     },
     {
       "name": "Casmarket",
+      "legacy": true,
       "variants": [
         {
           "name": "Booth",

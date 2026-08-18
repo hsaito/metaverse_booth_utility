@@ -122,6 +122,10 @@
         "name_i18n": {
           "$ref": "#/$defs/localizedNameMap"
         },
+        "legacy": {
+          "type": "boolean",
+          "description": "Marks this event as legacy."
+        },
         "variants": {
           "type": "array",
           "items": {
