@@ -293,6 +293,46 @@ def tr(key):
     return labels.get(language, labels.get("en", key))
 
 
+def get_addon_preferences():
+    try:
+        addons = bpy.context.preferences.addons
+    except (AttributeError, RuntimeError):
+        return None
+
+    addon = addons.get(__name__)
+    if addon:
+        return addon.preferences
+    return None
+
+
+def get_default_show_legacy_value():
+    prefs = get_addon_preferences()
+    if prefs is not None:
+        return bool(getattr(prefs, "default_show_legacy", False))
+    return False
+
+
+def apply_default_show_legacy_to_all_scenes(value):
+    try:
+        scenes = bpy.data.scenes
+    except AttributeError:
+        return
+
+    show_legacy = bool(value)
+    for scene in scenes:
+        props = getattr(scene, "booth_config", None)
+        if props is None:
+            continue
+        if props.show_legacy == show_legacy:
+            continue
+        props.show_legacy = show_legacy
+
+
+def update_default_show_legacy_preference(pref, context):
+    del context  # Unused.
+    apply_default_show_legacy_to_all_scenes(pref.default_show_legacy)
+
+
 def get_item_name(item):
     if not isinstance(item, dict):
         return ""
@@ -452,6 +492,17 @@ def apply_preset_to_properties(props, preset, variant=None):
     props.selected_type_is_legacy = is_legacy_type(preset, variant)
 
 
+def reset_preset_selection_state(props):
+    props.event_name = ""
+    props.variant_name = ""
+    props.type_name = ""
+    props.selected_type_is_legacy = False
+    props.width_m = 1.0
+    props.depth_m = 1.0
+    props.height_m = 1.0
+    props.front_axis = "y-"
+
+
 def normalize_selection_to_first_valid(props, config_data=None):
     props.selected_type_is_legacy = False
 
@@ -544,16 +595,11 @@ def sync_selected_legacy_flag(props, config_data=None):
 def update_show_legacy(props, context):
     del context  # Unused.
 
-    if props.show_legacy:
+    if props.suppress_show_legacy_update:
         return
 
-    try:
-        config_data = get_config_data(props)
-    except ValueError:
-        props.selected_type_is_legacy = False
-        return
-
-    normalize_selection_to_first_valid(props, config_data)
+    # Changing visibility mode should reset selection/preview to initial state.
+    reset_preset_selection_state(props)
 
 
 def get_selected_display_names(props, config_data=None):
@@ -783,6 +829,22 @@ def get_first_type(variant_data):
     return {}
 
 
+class MetaverseBoothUtilityPreferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+
+    default_show_legacy: BoolProperty(
+        name="Default Show Legacy",
+        description="Enable Show legacy by default for newly initialized scenes and reset; applies to open scenes immediately",
+        default=False,
+        update=update_default_show_legacy_preference,
+    )
+
+    def draw(self, context):
+        del context  # Unused.
+        layout = self.layout
+        layout.prop(self, "default_show_legacy")
+
+
 class BoothConfigProperties(PropertyGroup):
     config_json: StringProperty(
         name="Preset JSON",
@@ -793,6 +855,7 @@ class BoothConfigProperties(PropertyGroup):
     event_name: StringProperty(name="Event", default="")
     variant_name: StringProperty(name="Variant", default="")
     type_name: StringProperty(name="Type", default="")
+    suppress_show_legacy_update: BoolProperty(name="Suppress Show Legacy Update", default=False, options={"HIDDEN"})
     show_legacy: BoolProperty(name="Show Legacy", default=False, update=update_show_legacy)
     selected_type_is_legacy: BoolProperty(name="Selected Type Is Legacy", default=False)
     width_m: FloatProperty(name="Width (m)", default=1.0, min=0.1)
@@ -1007,15 +1070,12 @@ class BOOTH_OT_reset_config(Operator):
         props = context.scene.booth_config
         props.config_json = load_default_config_text()
         props.config_error = ""
-        props.event_name = ""
-        props.variant_name = ""
-        props.type_name = ""
-        props.show_legacy = False
-        props.selected_type_is_legacy = False
-        props.width_m = 1.0
-        props.depth_m = 1.0
-        props.height_m = 1.0
-        props.front_axis = "y-"
+        props.suppress_show_legacy_update = True
+        try:
+            props.show_legacy = get_default_show_legacy_value()
+        finally:
+            props.suppress_show_legacy_update = False
+        reset_preset_selection_state(props)
         self.report({"INFO"}, tr("reset_selection"))
         return {"FINISHED"}
 
@@ -1241,6 +1301,7 @@ class BOOTH_PT_panel(Panel):
 
 
 classes = (
+    MetaverseBoothUtilityPreferences,
     BoothConfigProperties,
     BOOTH_OT_generate_frame,
     BOOTH_OT_reset_config,
@@ -1272,6 +1333,12 @@ def register():
         for scene in scenes:
             scene.booth_config.config_json = DEFAULT_CONFIG_TEXT
             scene.booth_config.config_error = ""
+            scene.booth_config.suppress_show_legacy_update = True
+            try:
+                scene.booth_config.show_legacy = get_default_show_legacy_value()
+            finally:
+                scene.booth_config.suppress_show_legacy_update = False
+            reset_preset_selection_state(scene.booth_config)
             validate_config_text(scene.booth_config)
 
 
