@@ -11,6 +11,7 @@ import os
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, PointerProperty, StringProperty
 from bpy.types import Menu, Operator, Panel, PropertyGroup
+from bpy.app.handlers import persistent
 from mathutils import Vector
 
 
@@ -331,6 +332,16 @@ def apply_default_show_legacy_to_all_scenes(value):
 def update_default_show_legacy_preference(pref, context):
     del context  # Unused.
     apply_default_show_legacy_to_all_scenes(pref.default_show_legacy)
+
+
+@persistent
+def on_load_post_apply_default_show_legacy(_dummy):
+    apply_default_show_legacy_to_all_scenes(get_default_show_legacy_value())
+
+
+def defer_apply_default_show_legacy_once():
+    apply_default_show_legacy_to_all_scenes(get_default_show_legacy_value())
+    return None
 
 
 def get_item_name(item):
@@ -1341,8 +1352,16 @@ def register():
             reset_preset_selection_state(scene.booth_config)
             validate_config_text(scene.booth_config)
 
+    if on_load_post_apply_default_show_legacy not in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.append(on_load_post_apply_default_show_legacy)
+
+    bpy.app.timers.register(defer_apply_default_show_legacy_once, first_interval=0.1)
+
 
 def unregister():
+    if on_load_post_apply_default_show_legacy in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(on_load_post_apply_default_show_legacy)
+
     del bpy.types.Scene.booth_config
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
