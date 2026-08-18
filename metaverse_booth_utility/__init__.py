@@ -9,7 +9,7 @@ import math
 import os
 
 import bpy
-from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, PointerProperty, StringProperty
 from bpy.types import Menu, Operator, Panel, PropertyGroup
 from mathutils import Vector
 
@@ -34,6 +34,16 @@ UI_TRANSLATIONS = {
         "en": "Type",
         "ja": "タイプ",
         "es": "Tipo",
+    },
+    "legacy_badge": {
+        "en": "Legacy",
+        "ja": "レガシー",
+        "es": "Legado",
+    },
+    "show_legacy": {
+        "en": "Show legacy",
+        "ja": "レガシーを表示",
+        "es": "Mostrar legado",
     },
     "select_event": {
         "en": "Select Event",
@@ -367,6 +377,185 @@ def find_type(variant_data, type_name):
     return None
 
 
+def is_legacy_variant(variant_data):
+    if not isinstance(variant_data, dict):
+        return False
+
+    legacy_value = variant_data.get("legacy")
+    if isinstance(legacy_value, bool):
+        return legacy_value
+
+    # Backward compatibility for preset files that use a dedicated "Legacy" variant.
+    return get_item_name(variant_data).strip().lower() == "legacy"
+
+
+def is_legacy_type(preset_data, variant_data=None):
+    if not isinstance(preset_data, dict):
+        return False
+
+    legacy_value = preset_data.get("legacy")
+    if isinstance(legacy_value, bool):
+        return legacy_value
+
+    return is_legacy_variant(variant_data)
+
+
+def get_selectable_types(variant_data, show_legacy):
+    if not isinstance(variant_data, dict):
+        return []
+
+    selectable = []
+    for preset in variant_data.get("types", []):
+        if is_legacy_type(preset, variant_data) and not show_legacy:
+            continue
+        if not get_item_name(preset):
+            continue
+        selectable.append(preset)
+    return selectable
+
+
+def get_selectable_variants(event_data, show_legacy):
+    if not isinstance(event_data, dict):
+        return []
+
+    selectable = []
+    for variant in event_data.get("variants", []):
+        if is_legacy_variant(variant) and not show_legacy:
+            continue
+        if not get_item_name(variant):
+            continue
+        if not get_selectable_types(variant, show_legacy):
+            continue
+        selectable.append(variant)
+    return selectable
+
+
+def get_selectable_events(config_data, show_legacy):
+    selectable = []
+    for event in config_data.get("events", []):
+        if not get_item_name(event):
+            continue
+        if not get_selectable_variants(event, show_legacy):
+            continue
+        selectable.append(event)
+    return selectable
+
+
+def apply_preset_to_properties(props, preset, variant=None):
+    if not isinstance(preset, dict):
+        return
+
+    props.width_m = float(preset.get("width_m", props.width_m))
+    props.depth_m = float(preset.get("depth_m", props.depth_m))
+    props.height_m = float(preset.get("height_m", props.height_m))
+    props.front_axis = normalize_front_axis(preset.get("front_axis", props.front_axis))
+    props.selected_type_is_legacy = is_legacy_type(preset, variant)
+
+
+def normalize_selection_to_first_valid(props, config_data=None):
+    props.selected_type_is_legacy = False
+
+    if config_data is None:
+        try:
+            config_data = get_config_data(props)
+        except ValueError:
+            return
+
+    selectable_events = get_selectable_events(config_data, props.show_legacy)
+    if not selectable_events:
+        props.event_name = ""
+        props.variant_name = ""
+        props.type_name = ""
+        return
+
+    event_names = [get_item_name(event) for event in selectable_events]
+    if props.event_name not in event_names:
+        props.event_name = event_names[0]
+
+    event = find_event(config_data, props.event_name)
+    if not event:
+        props.event_name = event_names[0]
+        event = find_event(config_data, props.event_name)
+    if not event:
+        props.variant_name = ""
+        props.type_name = ""
+        return
+
+    selectable_variants = get_selectable_variants(event, props.show_legacy)
+    if not selectable_variants:
+        props.variant_name = ""
+        props.type_name = ""
+        return
+
+    variant_names = [get_item_name(variant) for variant in selectable_variants]
+    if props.variant_name not in variant_names:
+        props.variant_name = variant_names[0]
+
+    variant = find_variant(event, props.variant_name)
+    if not variant:
+        props.variant_name = variant_names[0]
+        variant = find_variant(event, props.variant_name)
+    if not variant:
+        props.type_name = ""
+        return
+
+    selectable_types = get_selectable_types(variant, props.show_legacy)
+    if not selectable_types:
+        props.type_name = ""
+        return
+
+    type_names = [get_item_name(preset) for preset in selectable_types]
+    if props.type_name not in type_names:
+        props.type_name = type_names[0]
+
+    preset = find_type(variant, props.type_name)
+    if not preset:
+        props.type_name = type_names[0]
+        preset = find_type(variant, props.type_name)
+
+    if preset:
+        apply_preset_to_properties(props, preset, variant)
+
+
+def sync_selected_legacy_flag(props, config_data=None):
+    props.selected_type_is_legacy = False
+
+    if config_data is None:
+        try:
+            config_data = get_config_data(props)
+        except ValueError:
+            return
+
+    event = find_event(config_data, props.event_name)
+    if not event:
+        return
+
+    variant = find_variant(event, props.variant_name)
+    if not variant:
+        return
+
+    preset = find_type(variant, props.type_name)
+    if not preset:
+        return
+
+    props.selected_type_is_legacy = is_legacy_type(preset, variant)
+
+
+def update_show_legacy(props, context):
+    del context  # Unused.
+
+    if props.show_legacy:
+        return
+
+    try:
+        config_data = get_config_data(props)
+    except ValueError:
+        props.selected_type_is_legacy = False
+        return
+
+    normalize_selection_to_first_valid(props, config_data)
+
+
 def get_selected_display_names(props, config_data=None):
     event_display = props.event_name
     variant_display = props.variant_name
@@ -398,10 +587,8 @@ def get_event_menu_items(props):
         return []
 
     items = []
-    for event in data.get("events", []):
+    for event in get_selectable_events(data, props.show_legacy):
         name = get_item_name(event)
-        if not name:
-            continue
         items.append((name, get_localized_name(event)))
     return items
 
@@ -417,10 +604,8 @@ def get_variant_menu_items(props):
         return []
 
     items = []
-    for variant in event.get("variants", []):
+    for variant in get_selectable_variants(event, props.show_legacy):
         name = get_item_name(variant)
-        if not name:
-            continue
         items.append((name, get_localized_name(variant)))
     return items
 
@@ -440,10 +625,8 @@ def get_type_menu_items(props):
         return []
 
     items = []
-    for preset in variant.get("types", []):
+    for preset in get_selectable_types(variant, props.show_legacy):
         name = get_item_name(preset)
-        if not name:
-            continue
         items.append((name, get_localized_name(preset)))
     return items
 
@@ -453,7 +636,7 @@ def get_event_names(props):
         data = get_config_data(props)
     except ValueError:
         return []
-    return [get_item_name(item) for item in data.get("events", []) if get_item_name(item)]
+    return [get_item_name(item) for item in get_selectable_events(data, props.show_legacy)]
 
 
 def get_variant_names(props):
@@ -465,7 +648,7 @@ def get_variant_names(props):
         return []
     event = find_event(data, props.event_name)
     if event:
-        return [get_item_name(item) for item in event.get("variants", []) if get_item_name(item)]
+        return [get_item_name(item) for item in get_selectable_variants(event, props.show_legacy)]
     return []
 
 
@@ -482,7 +665,7 @@ def get_type_names(props):
 
     variant = find_variant(event, props.variant_name)
     if variant:
-        return [get_item_name(item) for item in variant.get("types", []) if get_item_name(item)]
+        return [get_item_name(item) for item in get_selectable_types(variant, props.show_legacy)]
     return []
 
 bl_info = {
@@ -610,11 +793,13 @@ class BoothConfigProperties(PropertyGroup):
     event_name: StringProperty(name="Event", default="")
     variant_name: StringProperty(name="Variant", default="")
     type_name: StringProperty(name="Type", default="")
+    show_legacy: BoolProperty(name="Show Legacy", default=False, update=update_show_legacy)
+    selected_type_is_legacy: BoolProperty(name="Selected Type Is Legacy", default=False)
     width_m: FloatProperty(name="Width (m)", default=1.0, min=0.1)
     depth_m: FloatProperty(name="Depth (m)", default=1.0, min=0.1)
     height_m: FloatProperty(name="Height (m)", default=1.0, min=0.01)
     front_axis: EnumProperty(name="Front Axis", items=FRONT_AXIS_ITEMS, default="y-")
-    advanced_open: bpy.props.BoolProperty(name="Advanced", default=False)
+    advanced_open: BoolProperty(name="Advanced", default=False)
 
     def get_config_data(self):
         return get_config_data(self)
@@ -634,6 +819,7 @@ class BOOTH_OT_generate_frame(Operator):
             return {"CANCELLED"}
 
         selected = self._get_selected_spec(config_data, props)
+        selected_is_legacy = False
         if selected:
             event, variant, preset = selected
             event_name = get_item_name(event) or tr("manual")
@@ -642,6 +828,7 @@ class BOOTH_OT_generate_frame(Operator):
             event_display = get_localized_name(event)
             variant_display = get_localized_name(variant)
             preset_display = get_localized_name(preset)
+            selected_is_legacy = is_legacy_type(preset, variant)
         else:
             event_name = props.event_name or tr("manual")
             variant_name = props.variant_name or tr("custom")
@@ -650,6 +837,8 @@ class BOOTH_OT_generate_frame(Operator):
             variant_display = variant_name
             preset_display = preset_name
 
+        props.selected_type_is_legacy = selected_is_legacy
+
         width = float(props.width_m)
         depth = float(props.depth_m)
         height = float(props.height_m)
@@ -657,7 +846,16 @@ class BOOTH_OT_generate_frame(Operator):
         generated_collection = ensure_generated_collection(context)
 
         self._remove_existing_objects()
-        frame_obj = self._create_frame(width, depth, height, event_name, variant_name, preset_name, generated_collection)
+        frame_obj = self._create_frame(
+            width,
+            depth,
+            height,
+            event_name,
+            variant_name,
+            preset_name,
+            selected_is_legacy,
+            generated_collection,
+        )
         self._create_front_arrow(frame_obj, width, depth, height, front_axis, generated_collection)
 
         self.report(
@@ -700,7 +898,7 @@ class BOOTH_OT_generate_frame(Operator):
             if obj:
                 bpy.data.objects.remove(obj, do_unlink=True)
 
-    def _create_frame(self, width, depth, height, event_name, variant_name, type_name, generated_collection):
+    def _create_frame(self, width, depth, height, event_name, variant_name, type_name, is_legacy, generated_collection):
         bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 0.0), size=2.0)
         frame_obj = bpy.context.active_object
         frame_obj.name = "Booth Frame Reference"
@@ -726,6 +924,7 @@ class BOOTH_OT_generate_frame(Operator):
         frame_obj["booth_width_m"] = width
         frame_obj["booth_depth_m"] = depth
         frame_obj["booth_height_m"] = height
+        frame_obj["booth_legacy"] = bool(is_legacy)
         move_object_to_collection(frame_obj, generated_collection)
         return frame_obj
 
@@ -811,6 +1010,8 @@ class BOOTH_OT_reset_config(Operator):
         props.event_name = ""
         props.variant_name = ""
         props.type_name = ""
+        props.show_legacy = False
+        props.selected_type_is_legacy = False
         props.width_m = 1.0
         props.depth_m = 1.0
         props.height_m = 1.0
@@ -879,6 +1080,7 @@ class BOOTH_OT_select_event(Operator):
         props.event_name = self.value
         props.variant_name = ""
         props.type_name = ""
+        props.selected_type_is_legacy = False
         return {"FINISHED"}
 
 
@@ -891,6 +1093,7 @@ class BOOTH_OT_select_variant(Operator):
         props = context.scene.booth_config
         props.variant_name = self.value
         props.type_name = ""
+        props.selected_type_is_legacy = False
         return {"FINISHED"}
 
 
@@ -918,11 +1121,9 @@ class BOOTH_OT_select_type(Operator):
 
         preset = find_type(variant, props.type_name)
         if preset:
-            props.width_m = float(preset.get("width_m", props.width_m))
-            props.depth_m = float(preset.get("depth_m", props.depth_m))
-            props.height_m = float(preset.get("height_m", props.height_m))
-            props.front_axis = normalize_front_axis(preset.get("front_axis", props.front_axis))
+            apply_preset_to_properties(props, preset, variant)
             return {"FINISHED"}
+        props.selected_type_is_legacy = False
         return {"FINISHED"}
 
 
@@ -972,6 +1173,7 @@ class BOOTH_PT_panel(Panel):
         event_display, variant_display, type_display = get_selected_display_names(props)
 
         layout.label(text=tr("booth_presets"))
+        layout.prop(props, "show_legacy", text=tr("show_legacy"))
 
         event_row = layout.row()
         event_row.label(text=tr("event"))
@@ -1023,9 +1225,15 @@ class BOOTH_PT_panel(Panel):
         event = find_event(config_data, props.event_name)
         variant = find_variant(event, props.variant_name) if event else None
         selected = find_type(variant, props.type_name) if variant else None
+        selected_visible = bool(
+            selected
+            and (props.show_legacy or not is_legacy_type(selected, variant))
+        )
 
-        if selected:
+        if selected_visible:
             box = layout.box()
+            if props.selected_type_is_legacy:
+                box.label(text=tr("legacy_badge"), icon="BOOKMARKS")
             box.label(text=f"{tr('size')}: {selected.get('width_m', 0)} x {selected.get('depth_m', 0)} x {selected.get('height_m', 0)} m")
             box.label(text=f"{tr('front_axis')}: {normalize_front_axis(selected.get('front_axis', 'y-'))}")
         else:

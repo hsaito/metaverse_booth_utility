@@ -51,6 +51,10 @@
         "name_i18n": {
           "$ref": "#/$defs/localizedNameMap"
         },
+        "legacy": {
+          "type": "boolean",
+          "description": "Marks this type preset as legacy."
+        },
         "width_m": {
           "type": "number",
           "exclusiveMinimum": 0
@@ -90,6 +94,10 @@
         },
         "name_i18n": {
           "$ref": "#/$defs/localizedNameMap"
+        },
+        "legacy": {
+          "type": "boolean",
+          "description": "Marks this variant as legacy."
         },
         "types": {
           "type": "array",

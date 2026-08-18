@@ -86,9 +86,11 @@
         },
         {
           "name": "Legacy",
+          "legacy": true,
           "types": [
             {
               "name": "Large",
+              "legacy": true,
               "width_m": 10.0,
               "depth_m": 10.0,
               "height_m": 10.0,
@@ -100,6 +102,7 @@
             },
             {
               "name": "Extra Large",
+              "legacy": true,
               "width_m": 30.0,
               "depth_m": 30.0,
               "height_m": 30.0,
