@@ -5,6 +5,8 @@ Metaverse Booth Utility is a Blender add-on for quickly generating a booth refer
 ## Features
 - Sidebar UI in 3D View (`Metaverse` tab)
 - Event -> variant -> type preset selection
+- `Show legacy` toggle to include/exclude legacy presets
+- Add-on preference `Default Show Legacy` (Edit -> Preferences -> Add-ons) with immediate apply to open scenes
 - UI labels follow Blender UI language (`English`, `Japanese`, `Spanish`)
 - Auto-filled booth dimensions from JSON presets
 - Front-axis preview and generation support (`x+`, `x-`, `y+`, `y-`, `z+`, `z-`)
@@ -23,13 +25,19 @@ Metaverse Booth Utility is a Blender add-on for quickly generating a booth refer
 
 ## Usage
 1. Pick Event, Variant, and Type.
-2. (Optional) Open `Advanced` to tweak width/depth/height/front axis.
-3. Click `Generate` to create helper objects:
+2. (Optional) Enable `Show legacy` to include legacy-marked entries.
+3. (Optional) Open `Advanced` to tweak width/depth/height/front axis.
+4. Click `Generate` to create helper objects:
     - `Booth Frame Reference`
     - `Booth Front Arrow`
    The helper objects are created in `Metaverse Booth Utility Generated` collection.
-4. Click `Remove Generated` to clean up generated helpers.
+5. Click `Remove Generated` to clean up generated helpers.
    If the generated collection is empty afterward, it is also removed.
+
+Behavior notes:
+- `Reset` clears current Event/Variant/Type selection and preview state back to the initial prompt (`Select Event`, `Select a preset to preview`).
+- Toggling `Show legacy` performs the same selection reset behavior to avoid invalid/hidden selection states.
+- `Default Show Legacy` can be set in Add-on Preferences and is applied live to all open scenes.
 
 ## Preset JSON
 Presets are loaded from `metaverse_booth_utility/defaults.json`.
@@ -38,16 +46,25 @@ Structure overview:
 - `events[]`
 - `events[].name`
 - `events[].name_i18n` (optional localized label map)
+- `events[].legacy` (optional boolean)
 - `events[].variants[]`
 - `events[].variants[].name`
 - `events[].variants[].name_i18n` (optional localized label map)
+- `events[].variants[].legacy` (optional boolean)
 - `events[].variants[].types[]`
 - `events[].variants[].types[].name`
 - `events[].variants[].types[].name_i18n` (optional localized label map)
+- `events[].variants[].types[].legacy` (optional boolean)
 - `events[].variants[].types[].width_m`
 - `events[].variants[].types[].depth_m`
 - `events[].variants[].types[].height_m`
 - `events[].variants[].types[].front_axis`
+
+Legacy behavior:
+- If an `event` is marked `legacy: true`, all contained variants/types are treated as legacy unless overridden by explicit fields in descendants.
+- If a `variant` is marked `legacy: true`, contained types are treated as legacy unless a type explicitly sets its own `legacy`.
+- If a `type` is marked `legacy: true`, only that type is legacy.
+- Legacy entries are hidden unless `Show legacy` is enabled.
 
 Localization behavior:
 - `name` is always the canonical/fallback English key used internally.
@@ -84,6 +101,24 @@ Example:
                         "ja": "標準",
                         "es": "Estandar"
                      },
+                     "width_m": 4.0,
+                     "depth_m": 4.0,
+                     "height_m": 5.0,
+                     "front_axis": "y-"
+                  }
+               ]
+            }
+         ]
+      },
+      {
+         "name": "Casmarket",
+         "legacy": true,
+         "variants": [
+            {
+               "name": "Booth",
+               "types": [
+                  {
+                     "name": "S",
                      "width_m": 4.0,
                      "depth_m": 4.0,
                      "height_m": 5.0,
