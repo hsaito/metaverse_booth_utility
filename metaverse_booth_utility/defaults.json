@@ -8,14 +8,14 @@
           "name": "Space",
           "types": [
             {
-              "name": "Standard",
+              "name": "Standard Booth",
               "width_m": 4.0,
               "depth_m": 4.0,
               "height_m": 5.0,
               "front_axis": "y-",
               "name_i18n": {
-                "ja": "標準",
-                "es": "Estandar"
+                "ja": "標準ブース",
+                "es": "Estand normal"
               }
             }
           ],
@@ -28,34 +28,35 @@
           "name": "Item",
           "types": [
             {
-              "name": "Item",
+              "name": "Standard Item",
               "width_m": 1.0,
               "depth_m": 1.0,
               "height_m": 2.0,
               "front_axis": "y-",
               "name_i18n": {
-                "ja": "アイテム",
-                "es": "Articulo"
+                "ja": "通常アイテム",
+                "es": "Item normal"
               }
             }
           ],
           "name_i18n": {
             "ja": "アイテム",
-            "es": "Articulo"
+            "es": "Item"
           }
         },
         {
           "name": "Avatar",
           "types": [
             {
-              "name": "Cross Platform",
+              "name": "Cross Platform Avatar",
+              "legacy": true,
               "width_m": 2.0,
               "depth_m": 2.0,
               "height_m": 3.0,
               "front_axis": "y-",
               "name_i18n": {
-                "ja": "クロスプラットフォーム",
-                "es": "Multiplataforma"
+                "ja": "クロスプラットフォームアバター",
+                "es": "Avatar multiplataforma"
               }
             }
           ],
@@ -80,27 +81,27 @@
               }
             },
             {
-              "name": "Large",
+              "name": "Large Booth",
               "legacy": true,
               "width_m": 10.0,
               "depth_m": 10.0,
               "height_m": 10.0,
               "front_axis": "y-",
               "name_i18n": {
-                "ja": "大",
-                "es": "Grande"
+                "ja": "大ブース",
+                "es": "Estand grande"
               }
             },
             {
-              "name": "Extra Large",
+              "name": "Extra Large Booth",
               "legacy": true,
               "width_m": 30.0,
               "depth_m": 30.0,
               "height_m": 30.0,
               "front_axis": "y-",
               "name_i18n": {
-                "ja": "特大",
-                "es": "Extra Grande"
+                "ja": "特大ブース",
+                "es": "Estand extragrande"
               }
             }
           ],
@@ -122,25 +123,25 @@
           "name": "Booth",
           "types": [
             {
-              "name": "Standard",
+              "name": "Standard Size",
               "width_m": 10.0,
               "depth_m": 10.0,
               "height_m": 30.0,
               "front_axis": "y-",
               "name_i18n": {
-                "ja": "標準",
-                "es": "Estandar"
+                "ja": "標準サイズ",
+                "es": "Tamaño estándar"
               }
             },
             {
-              "name": "Max",
+              "name": "Max Size",
               "width_m": 20.0,
               "depth_m": 20.0,
               "height_m": 30.0,
               "front_axis": "y-",
               "name_i18n": {
-                "ja": "最大",
-                "es": "Maximo"
+                "ja": "最大サイズ",
+                "es": "Tamaño máximo"
               }
             }
           ],
@@ -212,13 +213,13 @@
               "front_axis": "y-",
               "name_i18n": {
                 "ja": "アイテム",
-                "es": "Articulo"
+                "es": "Item"
               }
             }
           ],
           "name_i18n": {
             "ja": "アイテム",
-            "es": "Articulo"
+            "es": "Item"
           }
         }
       ],
