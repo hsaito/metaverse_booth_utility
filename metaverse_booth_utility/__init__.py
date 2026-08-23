@@ -455,6 +455,22 @@ def apply_frame_visibility_restrictions(obj):
         _set_attr_if_exists(cycles_visibility, "scatter", False)
 
 
+def apply_human_visibility_restrictions(obj):
+    if not obj:
+        return
+
+    # Keep human helpers from affecting scene lighting/probes.
+    _set_attr_if_exists(obj, "visible_shadow", False)
+    _set_attr_if_exists(obj, "visible_raycast", False)
+    _set_attr_if_exists(obj, "visible_probe_volume", False)
+    _set_attr_if_exists(obj, "visible_probe_sphere", False)
+    _set_attr_if_exists(obj, "visible_probe_plane", False)
+
+    cycles_visibility = getattr(obj, "cycles_visibility", None)
+    if cycles_visibility:
+        _set_attr_if_exists(cycles_visibility, "shadow", False)
+
+
 def build_box_human_mesh(name, height):
     height = max(float(height), 0.1)
 
@@ -1257,6 +1273,7 @@ class BOOTH_OT_add_human_model(Operator):
         human_object.rotation_euler = (0.0, 0.0, 0.0)
         human_object.hide_render = False
         human_object.hide_select = False
+        apply_human_visibility_restrictions(human_object)
 
         generated_collection.objects.link(human_object)
         human_object.data.name = mesh_name
