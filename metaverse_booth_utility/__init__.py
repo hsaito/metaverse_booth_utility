@@ -903,7 +903,7 @@ bl_info = {
     "name": "Metaverse Booth Utility",
     "blender": (3, 6, 0),
     "category": "Object",
-    "version": (1, 3, 1),
+    "version": (1, 3, 2),
     "author": "Hideki Saito",
     "description": "Generate booth reference frames and front-direction arrows from configurable event presets.",
 }
