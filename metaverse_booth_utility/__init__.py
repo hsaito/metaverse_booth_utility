@@ -424,6 +424,37 @@ def move_object_to_collection(obj, target_collection):
             collection.objects.unlink(obj)
 
 
+def _set_attr_if_exists(target, name, value):
+    if hasattr(target, name):
+        setattr(target, name, value)
+
+
+def apply_frame_visibility_restrictions(obj):
+    if not obj:
+        return
+
+    # Keep the frame strictly as a wire helper and prevent render/probe influence.
+    _set_attr_if_exists(obj, "visible_camera", False)
+    _set_attr_if_exists(obj, "visible_shadow", False)
+    _set_attr_if_exists(obj, "visible_raycast", False)
+    _set_attr_if_exists(obj, "visible_diffuse", False)
+    _set_attr_if_exists(obj, "visible_glossy", False)
+    _set_attr_if_exists(obj, "visible_transmission", False)
+    _set_attr_if_exists(obj, "visible_volume_scatter", False)
+    _set_attr_if_exists(obj, "visible_probe_volume", False)
+    _set_attr_if_exists(obj, "visible_probe_sphere", False)
+    _set_attr_if_exists(obj, "visible_probe_plane", False)
+
+    cycles_visibility = getattr(obj, "cycles_visibility", None)
+    if cycles_visibility:
+        _set_attr_if_exists(cycles_visibility, "camera", False)
+        _set_attr_if_exists(cycles_visibility, "shadow", False)
+        _set_attr_if_exists(cycles_visibility, "diffuse", False)
+        _set_attr_if_exists(cycles_visibility, "glossy", False)
+        _set_attr_if_exists(cycles_visibility, "transmission", False)
+        _set_attr_if_exists(cycles_visibility, "scatter", False)
+
+
 def build_box_human_mesh(name, height):
     height = max(float(height), 0.1)
 
@@ -1115,6 +1146,7 @@ class BOOTH_OT_generate_frame(Operator):
         frame_obj.show_in_front = True
         frame_obj.hide_render = True
         frame_obj.hide_select = True
+        apply_frame_visibility_restrictions(frame_obj)
         frame_obj.select_set(False)
         frame_obj.lock_location = (True, True, True)
         frame_obj.lock_rotation = (True, True, True)
