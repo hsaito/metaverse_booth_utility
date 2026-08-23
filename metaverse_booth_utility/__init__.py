@@ -638,6 +638,7 @@ def reset_preset_selection_state(props):
     props.depth_m = 1.0
     props.height_m = 1.0
     props.front_axis = "y-"
+    props.human_height_m = 2.0
 
 
 def normalize_selection_to_first_valid(props, config_data=None):
