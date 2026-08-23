@@ -81,6 +81,31 @@ UI_TRANSLATIONS = {
         "ja": "生成物を削除",
         "es": "Eliminar generados",
     },
+    "human_models": {
+        "en": "Human Models",
+        "ja": "人型モデル",
+        "es": "Modelos humanos",
+    },
+    "human_model": {
+        "en": "Human Model",
+        "ja": "人型モデル",
+        "es": "Modelo humano",
+    },
+    "human_height": {
+        "en": "Height (m)",
+        "ja": "高さ (m)",
+        "es": "Altura (m)",
+    },
+    "add_human": {
+        "en": "Add Human",
+        "ja": "人型を追加",
+        "es": "Agregar humano",
+    },
+    "delete_all_humans": {
+        "en": "Delete All Humans",
+        "ja": "人型をすべて削除",
+        "es": "Eliminar todos los humanos",
+    },
     "show_frame": {
         "en": "Show Frame",
         "ja": "フレームを表示",
@@ -399,6 +424,90 @@ def move_object_to_collection(obj, target_collection):
             collection.objects.unlink(obj)
 
 
+def build_box_human_mesh(name, height):
+    height = max(float(height), 0.1)
+
+    leg_height = height * 0.48
+    torso_height = height * 0.34
+    head_height = height - leg_height - torso_height
+
+    leg_width = height * 0.12
+    leg_depth = height * 0.14
+    leg_gap = height * 0.04
+    torso_width = height * 0.32
+    torso_depth = height * 0.18
+    head_width = height * 0.20
+    head_depth = height * 0.20
+    arm_length = height * 0.34
+    arm_thickness = height * 0.08
+
+    vertices = []
+    faces = []
+
+    def add_box(center, dimensions):
+        cx, cy, cz = center
+        dx, dy, dz = dimensions[0] / 2.0, dimensions[1] / 2.0, dimensions[2] / 2.0
+        base_index = len(vertices)
+        vertices.extend(
+            [
+                (cx - dx, cy - dy, cz - dz),
+                (cx + dx, cy - dy, cz - dz),
+                (cx + dx, cy + dy, cz - dz),
+                (cx - dx, cy + dy, cz - dz),
+                (cx - dx, cy - dy, cz + dz),
+                (cx + dx, cy - dy, cz + dz),
+                (cx + dx, cy + dy, cz + dz),
+                (cx - dx, cy + dy, cz + dz),
+            ]
+        )
+        faces.extend(
+            [
+                (base_index + 0, base_index + 1, base_index + 2, base_index + 3),
+                (base_index + 4, base_index + 5, base_index + 6, base_index + 7),
+                (base_index + 0, base_index + 4, base_index + 7, base_index + 3),
+                (base_index + 1, base_index + 5, base_index + 6, base_index + 2),
+                (base_index + 3, base_index + 2, base_index + 6, base_index + 7),
+                (base_index + 0, base_index + 1, base_index + 5, base_index + 4),
+            ]
+        )
+
+    left_leg_x = -(leg_width / 2.0 + leg_gap / 2.0)
+    right_leg_x = leg_width / 2.0 + leg_gap / 2.0
+    leg_center_z = leg_height / 2.0
+    torso_center_z = leg_height + torso_height / 2.0
+    head_center_z = leg_height + torso_height + head_height / 2.0
+    arm_center_z = leg_height + torso_height * 0.70
+
+    add_box((left_leg_x, 0.0, leg_center_z), (leg_width, leg_depth, leg_height))
+    add_box((right_leg_x, 0.0, leg_center_z), (leg_width, leg_depth, leg_height))
+    add_box((0.0, 0.0, torso_center_z), (torso_width, torso_depth, torso_height))
+    add_box((0.0, 0.0, head_center_z), (head_width, head_depth, head_height))
+    add_box((-(torso_width / 2.0 + arm_length / 2.0), 0.0, arm_center_z), (arm_length, arm_thickness, arm_thickness))
+    add_box(((torso_width / 2.0 + arm_length / 2.0), 0.0, arm_center_z), (arm_length, arm_thickness, arm_thickness))
+
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    return mesh
+
+
+def get_human_model_objects():
+    return [obj for obj in bpy.data.objects if obj.get("booth_generated_human")]
+
+
+def delete_human_model_objects(context=None):
+    removed_count = 0
+    for obj in list(get_human_model_objects()):
+        bpy.data.objects.remove(obj, do_unlink=True)
+        removed_count += 1
+
+    generated_collection = get_generated_collection(context)
+    if generated_collection and not generated_collection.objects and not generated_collection.children:
+        bpy.data.collections.remove(generated_collection)
+
+    return removed_count
+
+
 def is_object_visible(obj):
     return bool(obj) and not obj.hide_viewport
 
@@ -529,6 +638,7 @@ def reset_preset_selection_state(props):
     props.depth_m = 1.0
     props.height_m = 1.0
     props.front_axis = "y-"
+    props.human_height_m = 2.0
 
 
 def normalize_selection_to_first_valid(props, config_data=None):
@@ -746,7 +856,7 @@ bl_info = {
     "name": "Metaverse Booth Utility",
     "blender": (3, 6, 0),
     "category": "Object",
-    "version": (1, 2, 1),
+    "version": (1, 3, 0),
     "author": "Hideki Saito",
     "description": "Generate booth reference frames and front-direction arrows from configurable event presets.",
 }
@@ -891,6 +1001,8 @@ class BoothConfigProperties(PropertyGroup):
     height_m: FloatProperty(name="Height (m)", default=1.0, min=0.01)
     front_axis: EnumProperty(name="Front Axis", items=FRONT_AXIS_ITEMS, default="y-")
     advanced_open: BoolProperty(name="Advanced", default=False)
+    human_models_open: BoolProperty(name="Human Models", default=False)
+    human_height_m: FloatProperty(name="Human Height (m)", default=2.0, min=0.1)
 
     def get_config_data(self):
         return get_config_data(self)
@@ -1089,6 +1201,60 @@ class BOOTH_OT_generate_frame(Operator):
         return vector.normalized()
 
 
+class BOOTH_OT_add_human_model(Operator):
+    bl_idname = "booth.add_human_model"
+    bl_label = "Add Human"
+    bl_description = "Add a simple procedural human model"
+
+    def execute(self, context):
+        props = context.scene.booth_config
+        generated_collection = ensure_generated_collection(context)
+        height = float(props.human_height_m)
+
+        cursor_location = getattr(getattr(context.scene, "cursor", None), "location", None)
+        if cursor_location is None:
+            cursor_location = Vector((0.0, 0.0, 0.0))
+        else:
+            cursor_location = Vector(cursor_location)
+
+        mesh_name = "Booth Human Mesh"
+        object_name = "Booth Human Model"
+        mesh = build_box_human_mesh(mesh_name, height)
+        human_object = bpy.data.objects.new(object_name, mesh)
+        human_object.location = cursor_location
+        human_object.rotation_euler = (0.0, 0.0, 0.0)
+        human_object.hide_render = False
+        human_object.hide_select = False
+
+        generated_collection.objects.link(human_object)
+        human_object.data.name = mesh_name
+
+        for obj in context.view_layer.objects:
+            obj.select_set(False)
+
+        human_object["booth_generated"] = True
+        human_object["booth_generated_human"] = True
+        human_object["booth_height_m"] = height
+
+        bpy.context.view_layer.objects.active = human_object
+        human_object.select_set(True)
+        bpy.context.view_layer.update()
+
+        self.report({"INFO"}, tr("human_model"))
+        return {"FINISHED"}
+
+
+class BOOTH_OT_remove_human_models(Operator):
+    bl_idname = "booth.remove_human_models"
+    bl_label = "Delete All Humans"
+    bl_description = "Remove all procedural human models created by this add-on"
+
+    def execute(self, context):
+        removed_count = delete_human_model_objects(context)
+        self.report({"INFO"}, tr("removed_generated").format(count=removed_count))
+        return {"FINISHED"}
+
+
 class BOOTH_OT_reset_config(Operator):
     bl_idname = "booth.reset_config"
     bl_label = "Reset"
@@ -1285,6 +1451,19 @@ class BOOTH_PT_panel(Panel):
             advanced_box.prop(props, "height_m", text=tr("height_m"))
             advanced_box.prop(props, "front_axis", text=tr("front_axis"))
 
+        human_box = layout.box()
+        human_box.prop(
+            props,
+            "human_models_open",
+            text=tr("human_models"),
+            icon="TRIA_DOWN" if props.human_models_open else "TRIA_RIGHT",
+        )
+        if props.human_models_open:
+            human_box.prop(props, "human_height_m", text=tr("human_height"))
+            human_row = human_box.row(align=True)
+            human_row.operator("booth.add_human_model", text=tr("add_human"), icon="ADD")
+            human_row.operator("booth.remove_human_models", text=tr("delete_all_humans"), icon="TRASH")
+
         action_row = layout.row(align=True)
         action_row.operator("booth.generate_frame", text=tr("generate"), icon="CHECKMARK")
         action_row.operator("booth.reset_config", text=tr("reset"), icon="LOOP_BACK")
@@ -1332,6 +1511,8 @@ classes = (
     MetaverseBoothUtilityPreferences,
     BoothConfigProperties,
     BOOTH_OT_generate_frame,
+    BOOTH_OT_add_human_model,
+    BOOTH_OT_remove_human_models,
     BOOTH_OT_reset_config,
     BOOTH_OT_remove_generated,
     BOOTH_OT_toggle_frame_visibility,

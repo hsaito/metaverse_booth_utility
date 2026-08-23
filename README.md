@@ -12,6 +12,8 @@ Metaverse Booth Utility is a Blender add-on for quickly generating a booth refer
 - Front-axis preview and generation support (`x+`, `x-`, `y+`, `y-`, `z+`, `z-`)
 - Generated helper objects are grouped in `Metaverse Booth Utility Generated` collection
 - One-click removal of generated helper objects
+- Collapsible human-model tools for adding simple procedural box-shaped people
+- Per-model height control with bulk deletion for generated human models
 
 ## Requirements
 - Blender 3.6+
@@ -33,6 +35,9 @@ Metaverse Booth Utility is a Blender add-on for quickly generating a booth refer
    The helper objects are created in `Metaverse Booth Utility Generated` collection.
 5. Click `Remove Generated` to clean up generated helpers.
    If the generated collection is empty afterward, it is also removed.
+6. Open `Human Models` to add simple procedural human models at the 3D cursor position.
+   Use the height slider to adjust their size before pressing `Add Human`.
+   `Delete All Humans` removes every generated human model from the scene.
 
 Behavior notes:
 - `Reset` clears current Event/Variant/Type selection and preview state back to the initial prompt (`Select Event`, `Select a preset to preview`).
