@@ -1225,12 +1225,17 @@ class BOOTH_OT_add_human_model(Operator):
         human_object.rotation_euler = (0.0, 0.0, 0.0)
         human_object.hide_render = False
         human_object.hide_select = False
+
+        generated_collection.objects.link(human_object)
+        human_object.data.name = mesh_name
+
+        for obj in context.view_layer.objects:
+            obj.select_set(False)
+
         human_object["booth_generated"] = True
         human_object["booth_generated_human"] = True
         human_object["booth_height_m"] = height
 
-        generated_collection.objects.link(human_object)
-        human_object.data.name = mesh_name
         bpy.context.view_layer.objects.active = human_object
         human_object.select_set(True)
         bpy.context.view_layer.update()
