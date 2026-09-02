@@ -17,38 +17,64 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Read version from __init__.py
+      - name: Build package from blender_manifest.toml
         id: version
         run: |
-          VERSION=$(python3 - <<'EOF'
-          import ast, sys
-          with open("metaverse_booth_utility/__init__.py", encoding="utf-8") as f:
-              tree = ast.parse(f.read())
-          for node in ast.walk(tree):
-              if isinstance(node, ast.Assign):
-                  for t in node.targets:
-                      if isinstance(t, ast.Name) and t.id == "bl_info":
-                          d = ast.literal_eval(node.value)
-                          print(".".join(str(x) for x in d["version"]))
-                          sys.exit(0)
-          raise SystemExit("Unable to read bl_info version")
+          python3 - <<'EOF'
+          from pathlib import Path
+          import fnmatch
+          import os
+          import tomllib
+          import zipfile
+
+          source_dir = Path("metaverse_booth_utility")
+          manifest_path = source_dir / "blender_manifest.toml"
+          dist_dir = Path("dist")
+          dist_dir.mkdir(exist_ok=True)
+
+          manifest = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
+          addon_id = manifest.get("id", source_dir.name)
+          version = manifest["version"]
+          exclude_patterns = manifest.get("paths_exclude_pattern", [])
+
+          def matches(path: Path, is_dir: bool) -> bool:
+              rel = path.relative_to(source_dir).as_posix()
+              rel_with_slash = rel + "/" if is_dir else rel
+              for pat in exclude_patterns:
+                  p = pat.strip()
+                  if not p:
+                      continue
+                  p_norm = p.replace("\\", "/")
+                  if fnmatch.fnmatch(rel, p_norm) or fnmatch.fnmatch(rel_with_slash, p_norm):
+                      return True
+                  if fnmatch.fnmatch(path.name, p_norm):
+                      return True
+              return False
+
+          def is_in_excluded_dir(path: Path) -> bool:
+              for parent in path.parents:
+                  if parent == source_dir:
+                      break
+                  if matches(parent, True):
+                      return True
+              return False
+
+          zip_path = dist_dir / f"{addon_id}-{version}.zip"
+          with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+              for p in sorted(source_dir.rglob("*")):
+                  if is_in_excluded_dir(p):
+                      continue
+                  if p.is_dir() and matches(p, True):
+                      continue
+                  if p.is_file() and matches(p, False):
+                      continue
+                  if p.is_file():
+                      zf.write(p, p.as_posix())
+
+          print(f"Created {zip_path}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"version={version}\\n")
           EOF
-          )
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Install Blender
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb
-          curl -L "https://download.blender.org/release/Blender5.2/blender-5.2.1-linux-x64.tar.xz" -o blender.tar.xz
-          tar -xf blender.tar.xz
-          echo "$PWD/blender-5.2.1-linux-x64" >> "$GITHUB_PATH"
-          blender-5.2.1-linux-x64/blender --version
-
-      - name: Build zip package
-        run: |
-          mkdir dist
-          xvfb-run -a blender-5.2.1-linux-x64/blender --background --command extension build --source-dir metaverse_booth_utility --output-dir dist
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
