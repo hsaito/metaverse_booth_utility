@@ -1438,7 +1438,7 @@ class BOOTH_MT_event_menu(Menu):
         layout = self.layout
         props = context.scene.booth_config
         for name, display_name in get_event_menu_items(props):
-            layout.operator("booth.select_event", text=display_name).value = name
+            layout.operator("booth.select_event", text=display_name, translate=False).value = name
 
 
 class BOOTH_MT_variant_menu(Menu):
@@ -1449,7 +1449,7 @@ class BOOTH_MT_variant_menu(Menu):
         layout = self.layout
         props = context.scene.booth_config
         for name, display_name in get_variant_menu_items(props):
-            layout.operator("booth.select_variant", text=display_name).value = name
+            layout.operator("booth.select_variant", text=display_name, translate=False).value = name
 
 
 class BOOTH_MT_type_menu(Menu):
@@ -1460,7 +1460,7 @@ class BOOTH_MT_type_menu(Menu):
         layout = self.layout
         props = context.scene.booth_config
         for name, display_name in get_type_menu_items(props):
-            layout.operator("booth.select_type", text=display_name).value = name
+            layout.operator("booth.select_type", text=display_name, translate=False).value = name
 
 
 class BOOTH_PT_panel(Panel):
@@ -1480,17 +1480,17 @@ class BOOTH_PT_panel(Panel):
 
         event_row = layout.row()
         event_row.label(text=tr("event"))
-        event_row.menu("BOOTH_MT_event_menu", text=event_display or tr("select_event"))
+        event_row.menu("BOOTH_MT_event_menu", text=event_display or tr("select_event"), translate=False)
 
         variant_row = layout.row()
         variant_row.label(text=tr("variant"))
         variant_row.enabled = bool(props.event_name)
-        variant_row.menu("BOOTH_MT_variant_menu", text=variant_display or tr("select_variant"))
+        variant_row.menu("BOOTH_MT_variant_menu", text=variant_display or tr("select_variant"), translate=False)
 
         type_row = layout.row()
         type_row.label(text=tr("type"))
         type_row.enabled = bool(props.event_name and props.variant_name)
-        type_row.menu("BOOTH_MT_type_menu", text=type_display or tr("select_type"))
+        type_row.menu("BOOTH_MT_type_menu", text=type_display or tr("select_type"), translate=False)
 
         advanced_box = layout.box()
         advanced_box.prop(props, "advanced_open", text=tr("advanced"), icon="TRIA_DOWN" if props.advanced_open else "TRIA_RIGHT")
