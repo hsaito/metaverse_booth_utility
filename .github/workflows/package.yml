@@ -24,6 +24,7 @@ jobs:
           from pathlib import Path
           import fnmatch
           import os
+          import re
           import tomllib
           import zipfile
 
@@ -34,7 +35,7 @@ jobs:
 
           manifest = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
           addon_id = manifest.get("id", source_dir.name)
-          version = manifest["version"]
+          version = str(manifest["version"]).strip()
           exclude_patterns = manifest.get("paths_exclude_pattern", [])
 
           def matches(path: Path, is_dir: bool) -> bool:
@@ -60,6 +61,8 @@ jobs:
               return False
 
           zip_path = dist_dir / f"{addon_id}-{version}.zip"
+          # GitHub artifact names cannot contain these chars: " : < > | * ? \r \n \\ /
+          artifact_name = re.sub(r'["<>:|*?\\/\r\n]+', "-", f"{addon_id}-{version}")
           with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
               for p in sorted(source_dir.rglob("*")):
                   if is_in_excluded_dir(p):
@@ -73,13 +76,14 @@ jobs:
 
           print(f"Created {zip_path}")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
-              f.write(f"version={version}\\n")
+              f.write(f"version={version}\n")
+              f.write(f"artifact_name={artifact_name}\n")
           EOF
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: metaverse_booth_utility-${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.artifact_name }}
           path: dist/
           retention-days: 90
 
