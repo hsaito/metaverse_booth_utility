@@ -39,12 +39,12 @@ jobs:
       - name: Install Blender
         run: |
           sudo apt-get update
-          sudo apt-get install -y blender
+          sudo apt-get install -y blender xvfb
 
       - name: Build zip package
         run: |
           mkdir dist
-          blender --command extension build --source-dir metaverse_booth_utility --output-dir dist
+          xvfb-run -a blender --command extension build --source-dir metaverse_booth_utility --output-dir dist
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
