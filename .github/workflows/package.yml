@@ -39,12 +39,16 @@ jobs:
       - name: Install Blender
         run: |
           sudo apt-get update
-          sudo apt-get install -y blender xvfb
+          sudo apt-get install -y xvfb
+          curl -L "https://download.blender.org/release/Blender4.2/blender-5.2.1-linux-x64.tar.xz" -o blender.tar.xz
+          tar -xf blender.tar.xz
+          echo "$PWD/blender-5.2.1-linux-x64" >> "$GITHUB_PATH"
+          blender-5.2.1-linux-x64/blender --version
 
       - name: Build zip package
         run: |
           mkdir dist
-          xvfb-run -a blender --command extension build --source-dir metaverse_booth_utility --output-dir dist
+          xvfb-run -a blender-5.2.1-linux-x64/blender --background --command extension build --source-dir metaverse_booth_utility --output-dir dist
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
