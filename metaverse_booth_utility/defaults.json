@@ -157,6 +157,46 @@
       }
     },
     {
+      "name": "Metafes",
+      "variants": [
+        {
+          "name": "General",
+          "types": [
+            {
+              "name": "Dress",
+              "width_m": 1.8,
+              "depth_m": 1.8,
+              "height_m": 2,
+              "front_axis": "y-",
+              "name_i18n": {
+                "ja": "ドレス",
+                "es": "Vestido"
+              }
+            },
+            {
+              "name": "Item",
+              "width_m": 1.0,
+              "depth_m": 1.0,
+              "height_m": 1.5,
+              "front_axis": "y-",
+              "name_i18n": {
+                "ja": "アイテム",
+                "es": "Item"
+              }
+            }
+          ],
+          "name_i18n": {
+            "ja": "一般",
+            "es": "General"
+          }
+        }
+      ],
+      "name_i18n": {
+        "ja": "メタフェス",
+        "es": "Metafes"
+      }
+    },
+    {
       "name": "Casmarket",
       "legacy": true,
       "variants": [

@@ -17,41 +17,86 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Read version from __init__.py
+      - name: Build package from blender_manifest.toml
         id: version
         run: |
-          VERSION=$(python3 - <<'EOF'
-          import ast, sys
-          with open("metaverse_booth_utility/__init__.py", encoding="utf-8") as f:
-              tree = ast.parse(f.read())
-          for node in ast.walk(tree):
-              if isinstance(node, ast.Assign):
-                  for t in node.targets:
-                      if isinstance(t, ast.Name) and t.id == "bl_info":
-                          d = ast.literal_eval(node.value)
-                          print(".".join(str(x) for x in d["version"]))
-                          sys.exit(0)
-          raise SystemExit("Unable to read bl_info version")
-          EOF
-          )
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          python3 - <<'EOF'
+          from pathlib import Path
+          import fnmatch
+          import os
+          import re
+          import tomllib
+          import zipfile
 
-      - name: Build zip package
-        run: |
-          mkdir -p dist
-          zip -r dist/metaverse_booth_utility-${{ steps.version.outputs.version }}.zip \
-            metaverse_booth_utility/
+          source_dir = Path("metaverse_booth_utility")
+          manifest_path = source_dir / "blender_manifest.toml"
+          dist_dir = Path("dist")
+          dist_dir.mkdir(exist_ok=True)
+
+          manifest = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
+          addon_id = manifest.get("id", source_dir.name)
+          version = str(manifest["version"]).strip()
+          exclude_patterns = manifest.get("paths_exclude_pattern", [])
+          version_core = version.split("+", 1)[0]
+          prerelease = (
+              "-" in version_core
+              or re.search(r"(?i)(alpha|beta|rc|pre|preview)", version_core) is not None
+          )
+
+          def matches(path: Path, is_dir: bool) -> bool:
+              rel = path.relative_to(source_dir).as_posix()
+              rel_with_slash = rel + "/" if is_dir else rel
+              for pat in exclude_patterns:
+                  p = pat.strip()
+                  if not p:
+                      continue
+                  p_norm = p.replace("\\", "/")
+                  if fnmatch.fnmatch(rel, p_norm) or fnmatch.fnmatch(rel_with_slash, p_norm):
+                      return True
+                  if fnmatch.fnmatch(path.name, p_norm):
+                      return True
+              return False
+
+          def is_in_excluded_dir(path: Path) -> bool:
+              for parent in path.parents:
+                  if parent == source_dir:
+                      break
+                  if matches(parent, True):
+                      return True
+              return False
+
+          zip_path = dist_dir / f"{addon_id}-{version}.zip"
+          # GitHub artifact names cannot contain these chars: " : < > | * ? \r \n \\ /
+          artifact_name = re.sub(r'["<>:|*?\\/\r\n]+', "-", f"{addon_id}-{version}")
+          with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+              for p in sorted(source_dir.rglob("*")):
+                  if is_in_excluded_dir(p):
+                      continue
+                  if p.is_dir() and matches(p, True):
+                      continue
+                  if p.is_file() and matches(p, False):
+                      continue
+                  if p.is_file():
+                      zf.write(p, p.as_posix())
+
+          print(f"Created {zip_path}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"version={version}\n")
+              f.write(f"artifact_name={artifact_name}\n")
+              f.write(f"prerelease={'true' if prerelease else 'false'}\n")
+          EOF
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: metaverse_booth_utility-${{ steps.version.outputs.version }}
-          path: dist/metaverse_booth_utility-${{ steps.version.outputs.version }}.zip
+          name: ${{ steps.version.outputs.artifact_name }}
+          path: dist/
           retention-days: 90
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/metaverse_booth_utility-${{ steps.version.outputs.version }}.zip
+          files: dist/*
           generate_release_notes: true
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
