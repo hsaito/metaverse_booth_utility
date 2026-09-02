@@ -38,20 +38,19 @@ jobs:
 
       - name: Build zip package
         run: |
-          mkdir -p dist
-          zip -r dist/metaverse_booth_utility-${{ steps.version.outputs.version }}.zip \
-            metaverse_booth_utility/
+          mkdir dist
+          blender --command extension build --source-dir metaverse_booth_utility --output-dir dist
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: metaverse_booth_utility-${{ steps.version.outputs.version }}
-          path: dist/metaverse_booth_utility-${{ steps.version.outputs.version }}.zip
+          path: dist/
           retention-days: 90
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/metaverse_booth_utility-${{ steps.version.outputs.version }}.zip
+          files: dist/*
           generate_release_notes: true
