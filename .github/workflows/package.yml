@@ -37,6 +37,11 @@ jobs:
           addon_id = manifest.get("id", source_dir.name)
           version = str(manifest["version"]).strip()
           exclude_patterns = manifest.get("paths_exclude_pattern", [])
+            version_core = version.split("+", 1)[0]
+            prerelease = (
+              "-" in version_core
+              or re.search(r"(?i)(alpha|beta|rc|pre|preview)", version_core) is not None
+            )
 
           def matches(path: Path, is_dir: bool) -> bool:
               rel = path.relative_to(source_dir).as_posix()
@@ -78,6 +83,7 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"version={version}\n")
               f.write(f"artifact_name={artifact_name}\n")
+              f.write(f"prerelease={'true' if prerelease else 'false'}\n")
           EOF
 
       - name: Upload artifact
@@ -93,3 +99,4 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
