@@ -41,10 +41,20 @@ UI_TRANSLATIONS = {
         "ja": "レガシー",
         "es": "Legado",
     },
+    "real_badge": {
+        "en": "Real Event",
+        "ja": "リアルイベント",
+        "es": "Evento real",
+    },
     "show_legacy": {
         "en": "Show legacy",
         "ja": "レガシーを表示",
         "es": "Mostrar legado",
+    },
+    "show_real": {
+        "en": "Show real events",
+        "ja": "リアルイベントを表示",
+        "es": "Mostrar eventos reales",
     },
     "select_event": {
         "en": "Select Event",
@@ -338,6 +348,13 @@ def get_default_show_legacy_value():
     return False
 
 
+def get_default_show_real_value():
+    prefs = get_addon_preferences()
+    if prefs is not None:
+        return bool(getattr(prefs, "default_show_real", False))
+    return False
+
+
 def apply_default_show_legacy_to_all_scenes(value):
     try:
         scenes = bpy.data.scenes
@@ -354,9 +371,30 @@ def apply_default_show_legacy_to_all_scenes(value):
         props.show_legacy = show_legacy
 
 
+def apply_default_show_real_to_all_scenes(value):
+    try:
+        scenes = bpy.data.scenes
+    except AttributeError:
+        return
+
+    show_real = bool(value)
+    for scene in scenes:
+        props = getattr(scene, "booth_config", None)
+        if props is None:
+            continue
+        if props.show_real == show_real:
+            continue
+        props.show_real = show_real
+
+
 def update_default_show_legacy_preference(pref, context):
     del context  # Unused.
     apply_default_show_legacy_to_all_scenes(pref.default_show_legacy)
+
+
+def update_default_show_real_preference(pref, context):
+    del context  # Unused.
+    apply_default_show_real_to_all_scenes(pref.default_show_real)
 
 
 @persistent
@@ -364,8 +402,18 @@ def on_load_post_apply_default_show_legacy(_dummy):
     apply_default_show_legacy_to_all_scenes(get_default_show_legacy_value())
 
 
+@persistent
+def on_load_post_apply_default_show_real(_dummy):
+    apply_default_show_real_to_all_scenes(get_default_show_real_value())
+
+
 def defer_apply_default_show_legacy_once():
     apply_default_show_legacy_to_all_scenes(get_default_show_legacy_value())
+    return None
+
+
+def defer_apply_default_show_real_once():
+    apply_default_show_real_to_all_scenes(get_default_show_real_value())
     return None
 
 
@@ -621,7 +669,43 @@ def is_legacy_type(preset_data, variant_data=None, event_data=None):
     return is_legacy_variant(variant_data, event_data)
 
 
-def get_selectable_types(variant_data, show_legacy, event_data=None):
+def is_real_event(event_data):
+    if not isinstance(event_data, dict):
+        return False
+
+    real_value = event_data.get("real")
+    if isinstance(real_value, bool):
+        return real_value
+
+    return False
+
+
+def is_real_variant(variant_data, event_data=None):
+    if not isinstance(variant_data, dict):
+        return False
+
+    real_value = variant_data.get("real")
+    if isinstance(real_value, bool):
+        return real_value
+
+    if is_real_event(event_data):
+        return True
+
+    return False
+
+
+def is_real_type(preset_data, variant_data=None, event_data=None):
+    if not isinstance(preset_data, dict):
+        return False
+
+    real_value = preset_data.get("real")
+    if isinstance(real_value, bool):
+        return real_value
+
+    return is_real_variant(variant_data, event_data)
+
+
+def get_selectable_types(variant_data, show_legacy, show_real, event_data=None):
     if not isinstance(variant_data, dict):
         return []
 
@@ -629,37 +713,43 @@ def get_selectable_types(variant_data, show_legacy, event_data=None):
     for preset in variant_data.get("types", []):
         if is_legacy_type(preset, variant_data, event_data) and not show_legacy:
             continue
+        if is_real_type(preset, variant_data, event_data) and not show_real:
+            continue
         if not get_item_name(preset):
             continue
         selectable.append(preset)
     return selectable
 
 
-def get_selectable_variants(event_data, show_legacy):
+def get_selectable_variants(event_data, show_legacy, show_real):
     if not isinstance(event_data, dict):
         return []
 
     if is_legacy_event(event_data) and not show_legacy:
+        return []
+    if is_real_event(event_data) and not show_real:
         return []
 
     selectable = []
     for variant in event_data.get("variants", []):
         if is_legacy_variant(variant, event_data) and not show_legacy:
             continue
+        if is_real_variant(variant, event_data) and not show_real:
+            continue
         if not get_item_name(variant):
             continue
-        if not get_selectable_types(variant, show_legacy, event_data):
+        if not get_selectable_types(variant, show_legacy, show_real, event_data):
             continue
         selectable.append(variant)
     return selectable
 
 
-def get_selectable_events(config_data, show_legacy):
+def get_selectable_events(config_data, show_legacy, show_real):
     selectable = []
     for event in config_data.get("events", []):
         if not get_item_name(event):
             continue
-        if not get_selectable_variants(event, show_legacy):
+        if not get_selectable_variants(event, show_legacy, show_real):
             continue
         selectable.append(event)
     return selectable
@@ -674,6 +764,7 @@ def apply_preset_to_properties(props, preset, variant=None, event=None):
     props.height_m = float(preset.get("height_m", props.height_m))
     props.front_axis = normalize_front_axis(preset.get("front_axis", props.front_axis))
     props.selected_type_is_legacy = is_legacy_type(preset, variant, event)
+    props.selected_type_is_real = is_real_type(preset, variant, event)
 
 
 def reset_preset_selection_state(props):
@@ -681,6 +772,7 @@ def reset_preset_selection_state(props):
     props.variant_name = ""
     props.type_name = ""
     props.selected_type_is_legacy = False
+    props.selected_type_is_real = False
     props.width_m = 1.0
     props.depth_m = 1.0
     props.height_m = 1.0
@@ -690,6 +782,7 @@ def reset_preset_selection_state(props):
 
 def normalize_selection_to_first_valid(props, config_data=None):
     props.selected_type_is_legacy = False
+    props.selected_type_is_real = False
 
     if config_data is None:
         try:
@@ -697,7 +790,7 @@ def normalize_selection_to_first_valid(props, config_data=None):
         except ValueError:
             return
 
-    selectable_events = get_selectable_events(config_data, props.show_legacy)
+    selectable_events = get_selectable_events(config_data, props.show_legacy, props.show_real)
     if not selectable_events:
         props.event_name = ""
         props.variant_name = ""
@@ -717,7 +810,7 @@ def normalize_selection_to_first_valid(props, config_data=None):
         props.type_name = ""
         return
 
-    selectable_variants = get_selectable_variants(event, props.show_legacy)
+    selectable_variants = get_selectable_variants(event, props.show_legacy, props.show_real)
     if not selectable_variants:
         props.variant_name = ""
         props.type_name = ""
@@ -735,7 +828,7 @@ def normalize_selection_to_first_valid(props, config_data=None):
         props.type_name = ""
         return
 
-    selectable_types = get_selectable_types(variant, props.show_legacy, event)
+    selectable_types = get_selectable_types(variant, props.show_legacy, props.show_real, event)
     if not selectable_types:
         props.type_name = ""
         return
@@ -755,6 +848,7 @@ def normalize_selection_to_first_valid(props, config_data=None):
 
 def sync_selected_legacy_flag(props, config_data=None):
     props.selected_type_is_legacy = False
+    props.selected_type_is_real = False
 
     if config_data is None:
         try:
@@ -775,12 +869,23 @@ def sync_selected_legacy_flag(props, config_data=None):
         return
 
     props.selected_type_is_legacy = is_legacy_type(preset, variant, event)
+    props.selected_type_is_real = is_real_type(preset, variant, event)
 
 
 def update_show_legacy(props, context):
     del context  # Unused.
 
     if props.suppress_show_legacy_update:
+        return
+
+    # Changing visibility mode should reset selection/preview to initial state.
+    reset_preset_selection_state(props)
+
+
+def update_show_real(props, context):
+    del context  # Unused.
+
+    if props.suppress_show_real_update:
         return
 
     # Changing visibility mode should reset selection/preview to initial state.
@@ -818,7 +923,7 @@ def get_event_menu_items(props):
         return []
 
     items = []
-    for event in get_selectable_events(data, props.show_legacy):
+    for event in get_selectable_events(data, props.show_legacy, props.show_real):
         name = get_item_name(event)
         items.append((name, get_localized_name(event)))
     return items
@@ -835,7 +940,7 @@ def get_variant_menu_items(props):
         return []
 
     items = []
-    for variant in get_selectable_variants(event, props.show_legacy):
+    for variant in get_selectable_variants(event, props.show_legacy, props.show_real):
         name = get_item_name(variant)
         items.append((name, get_localized_name(variant)))
     return items
@@ -856,7 +961,7 @@ def get_type_menu_items(props):
         return []
 
     items = []
-    for preset in get_selectable_types(variant, props.show_legacy, event):
+    for preset in get_selectable_types(variant, props.show_legacy, props.show_real, event):
         name = get_item_name(preset)
         items.append((name, get_localized_name(preset)))
     return items
@@ -867,7 +972,7 @@ def get_event_names(props):
         data = get_config_data(props)
     except ValueError:
         return []
-    return [get_item_name(item) for item in get_selectable_events(data, props.show_legacy)]
+    return [get_item_name(item) for item in get_selectable_events(data, props.show_legacy, props.show_real)]
 
 
 def get_variant_names(props):
@@ -879,7 +984,7 @@ def get_variant_names(props):
         return []
     event = find_event(data, props.event_name)
     if event:
-        return [get_item_name(item) for item in get_selectable_variants(event, props.show_legacy)]
+        return [get_item_name(item) for item in get_selectable_variants(event, props.show_legacy, props.show_real)]
     return []
 
 
@@ -896,14 +1001,14 @@ def get_type_names(props):
 
     variant = find_variant(event, props.variant_name)
     if variant:
-        return [get_item_name(item) for item in get_selectable_types(variant, props.show_legacy, event)]
+        return [get_item_name(item) for item in get_selectable_types(variant, props.show_legacy, props.show_real, event)]
     return []
 
 bl_info = {
     "name": "Metaverse Booth Utility",
     "blender": (3, 6, 0),
     "category": "Object",
-    "version": (1, 3, 3),
+    "version": (1, 4, 0),
     "author": "Hideki Saito",
     "description": "Generate booth reference frames and front-direction arrows from configurable event presets.",
 }
@@ -1023,11 +1128,18 @@ class MetaverseBoothUtilityPreferences(bpy.types.AddonPreferences):
         default=False,
         update=update_default_show_legacy_preference,
     )
+    default_show_real: BoolProperty(
+        name="Default Show Real Events",
+        description="Enable Show real events by default for newly initialized scenes and reset; applies to open scenes immediately",
+        default=False,
+        update=update_default_show_real_preference,
+    )
 
     def draw(self, context):
         del context  # Unused.
         layout = self.layout
         layout.prop(self, "default_show_legacy")
+        layout.prop(self, "default_show_real")
 
 
 class BoothConfigProperties(PropertyGroup):
@@ -1041,8 +1153,11 @@ class BoothConfigProperties(PropertyGroup):
     variant_name: StringProperty(name="Variant", default="")
     type_name: StringProperty(name="Type", default="")
     suppress_show_legacy_update: BoolProperty(name="Suppress Show Legacy Update", default=False, options={"HIDDEN"})
+    suppress_show_real_update: BoolProperty(name="Suppress Show Real Update", default=False, options={"HIDDEN"})
     show_legacy: BoolProperty(name="Show Legacy", default=False, update=update_show_legacy)
+    show_real: BoolProperty(name="Show Real Events", default=False, update=update_show_real)
     selected_type_is_legacy: BoolProperty(name="Selected Type Is Legacy", default=False)
+    selected_type_is_real: BoolProperty(name="Selected Type Is Real", default=False)
     width_m: FloatProperty(name="Width (m)", default=1.0, min=0.1)
     depth_m: FloatProperty(name="Depth (m)", default=1.0, min=0.1)
     height_m: FloatProperty(name="Height (m)", default=1.0, min=0.01)
@@ -1070,6 +1185,7 @@ class BOOTH_OT_generate_frame(Operator):
 
         selected = self._get_selected_spec(config_data, props)
         selected_is_legacy = False
+        selected_is_real = False
         if selected:
             event, variant, preset = selected
             event_name = get_item_name(event) or tr("manual")
@@ -1079,6 +1195,7 @@ class BOOTH_OT_generate_frame(Operator):
             variant_display = get_localized_name(variant)
             preset_display = get_localized_name(preset)
             selected_is_legacy = is_legacy_type(preset, variant, event)
+            selected_is_real = is_real_type(preset, variant, event)
         else:
             event_name = props.event_name or tr("manual")
             variant_name = props.variant_name or tr("custom")
@@ -1088,6 +1205,7 @@ class BOOTH_OT_generate_frame(Operator):
             preset_display = preset_name
 
         props.selected_type_is_legacy = selected_is_legacy
+        props.selected_type_is_real = selected_is_real
 
         width = float(props.width_m)
         depth = float(props.depth_m)
@@ -1104,6 +1222,7 @@ class BOOTH_OT_generate_frame(Operator):
             variant_name,
             preset_name,
             selected_is_legacy,
+            selected_is_real,
             generated_collection,
         )
         self._create_front_arrow(frame_obj, width, depth, height, front_axis, generated_collection)
@@ -1148,7 +1267,7 @@ class BOOTH_OT_generate_frame(Operator):
             if obj:
                 bpy.data.objects.remove(obj, do_unlink=True)
 
-    def _create_frame(self, width, depth, height, event_name, variant_name, type_name, is_legacy, generated_collection):
+    def _create_frame(self, width, depth, height, event_name, variant_name, type_name, is_legacy, is_real, generated_collection):
         bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 0.0), size=2.0)
         frame_obj = bpy.context.active_object
         frame_obj.name = "Booth Frame Reference"
@@ -1176,6 +1295,7 @@ class BOOTH_OT_generate_frame(Operator):
         frame_obj["booth_depth_m"] = depth
         frame_obj["booth_height_m"] = height
         frame_obj["booth_legacy"] = bool(is_legacy)
+        frame_obj["booth_real"] = bool(is_real)
         move_object_to_collection(frame_obj, generated_collection)
         return frame_obj
 
@@ -1314,10 +1434,13 @@ class BOOTH_OT_reset_config(Operator):
         props.config_json = load_default_config_text()
         props.config_error = ""
         props.suppress_show_legacy_update = True
+        props.suppress_show_real_update = True
         try:
             props.show_legacy = get_default_show_legacy_value()
+            props.show_real = get_default_show_real_value()
         finally:
             props.suppress_show_legacy_update = False
+            props.suppress_show_real_update = False
         reset_preset_selection_state(props)
         self.report({"INFO"}, tr("reset_selection"))
         return {"FINISHED"}
@@ -1384,6 +1507,7 @@ class BOOTH_OT_select_event(Operator):
         props.variant_name = ""
         props.type_name = ""
         props.selected_type_is_legacy = False
+        props.selected_type_is_real = False
         return {"FINISHED"}
 
 
@@ -1397,6 +1521,7 @@ class BOOTH_OT_select_variant(Operator):
         props.variant_name = self.value
         props.type_name = ""
         props.selected_type_is_legacy = False
+        props.selected_type_is_real = False
         return {"FINISHED"}
 
 
@@ -1427,6 +1552,7 @@ class BOOTH_OT_select_type(Operator):
             apply_preset_to_properties(props, preset, variant, event)
             return {"FINISHED"}
         props.selected_type_is_legacy = False
+        props.selected_type_is_real = False
         return {"FINISHED"}
 
 
@@ -1477,6 +1603,7 @@ class BOOTH_PT_panel(Panel):
 
         layout.label(text=tr("booth_presets"))
         layout.prop(props, "show_legacy", text=tr("show_legacy"))
+        layout.prop(props, "show_real", text=tr("show_real"))
 
         event_row = layout.row()
         event_row.label(text=tr("event"))
@@ -1544,12 +1671,15 @@ class BOOTH_PT_panel(Panel):
         selected_visible = bool(
             selected
             and (props.show_legacy or not is_legacy_type(selected, variant, event))
+            and (props.show_real or not is_real_type(selected, variant, event))
         )
 
         if selected_visible:
             box = layout.box()
             if props.selected_type_is_legacy:
                 box.label(text=tr("legacy_badge"), icon="BOOKMARKS")
+            if props.selected_type_is_real:
+                box.label(text=tr("real_badge"), icon="CHECKMARK")
             box.label(text=f"{tr('size')}: {selected.get('width_m', 0)} x {selected.get('depth_m', 0)} x {selected.get('height_m', 0)} m")
             box.label(text=f"{tr('front_axis')}: {normalize_front_axis(selected.get('front_axis', 'y-'))}")
         else:
@@ -1592,22 +1722,32 @@ def register():
             scene.booth_config.config_json = DEFAULT_CONFIG_TEXT
             scene.booth_config.config_error = ""
             scene.booth_config.suppress_show_legacy_update = True
+            scene.booth_config.suppress_show_real_update = True
             try:
                 scene.booth_config.show_legacy = get_default_show_legacy_value()
+                scene.booth_config.show_real = get_default_show_real_value()
             finally:
                 scene.booth_config.suppress_show_legacy_update = False
+                scene.booth_config.suppress_show_real_update = False
             reset_preset_selection_state(scene.booth_config)
             validate_config_text(scene.booth_config)
 
     if on_load_post_apply_default_show_legacy not in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(on_load_post_apply_default_show_legacy)
 
+    if on_load_post_apply_default_show_real not in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.append(on_load_post_apply_default_show_real)
+
     bpy.app.timers.register(defer_apply_default_show_legacy_once, first_interval=0.1)
+    bpy.app.timers.register(defer_apply_default_show_real_once, first_interval=0.1)
 
 
 def unregister():
     if on_load_post_apply_default_show_legacy in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(on_load_post_apply_default_show_legacy)
+
+    if on_load_post_apply_default_show_real in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(on_load_post_apply_default_show_real)
 
     del bpy.types.Scene.booth_config
     for cls in reversed(classes):

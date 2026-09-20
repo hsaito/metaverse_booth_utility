@@ -6,7 +6,9 @@ Metaverse Booth Utility is a Blender add-on for quickly generating a booth refer
 - Sidebar UI in 3D View (`Metaverse` tab)
 - Event -> variant -> type preset selection
 - `Show legacy` toggle to include/exclude legacy presets
+- `Show real events` toggle to include/exclude real-event presets
 - Add-on preference `Default Show Legacy` (Edit -> Preferences -> Add-ons) with immediate apply to open scenes
+- Add-on preference `Default Show Real Events` (Edit -> Preferences -> Add-ons) with immediate apply to open scenes
 - UI labels follow Blender UI language (`English`, `Japanese`, `Spanish`)
 - Auto-filled booth dimensions from JSON presets
 - Front-axis preview and generation support (`x+`, `x-`, `y+`, `y-`, `z+`, `z-`)
@@ -28,21 +30,24 @@ Metaverse Booth Utility is a Blender add-on for quickly generating a booth refer
 ## Usage
 1. Pick Event, Variant, and Type.
 2. (Optional) Enable `Show legacy` to include legacy-marked entries.
-3. (Optional) Open `Advanced` to tweak width/depth/height/front axis.
-4. Click `Generate` to create helper objects:
+3. (Optional) Enable `Show real events` to include real-event-marked entries.
+4. (Optional) Open `Advanced` to tweak width/depth/height/front axis.
+5. Click `Generate` to create helper objects:
     - `Booth Frame Reference`
     - `Booth Front Arrow`
    The helper objects are created in `Metaverse Booth Utility Generated` collection.
-5. Click `Remove Generated` to clean up generated helpers.
+6. Click `Remove Generated` to clean up generated helpers.
    If the generated collection is empty afterward, it is also removed.
-6. Open `Human Models` to add simple procedural human models at the 3D cursor position.
+7. Open `Human Models` to add simple procedural human models at the 3D cursor position.
    Use the height slider to adjust their size before pressing `Add Human`.
    `Delete All Humans` removes every generated human model from the scene.
 
 Behavior notes:
 - `Reset` clears current Event/Variant/Type selection and preview state back to the initial prompt (`Select Event`, `Select a preset to preview`).
 - Toggling `Show legacy` performs the same selection reset behavior to avoid invalid/hidden selection states.
+- Toggling `Show real events` performs the same selection reset behavior to avoid invalid/hidden selection states.
 - `Default Show Legacy` can be set in Add-on Preferences and is applied live to all open scenes.
+- `Default Show Real Events` can be set in Add-on Preferences and is applied live to all open scenes.
 
 ## Preset JSON
 Presets are loaded from `metaverse_booth_utility/defaults.json`.
@@ -52,14 +57,17 @@ Structure overview:
 - `events[].name`
 - `events[].name_i18n` (optional localized label map)
 - `events[].legacy` (optional boolean)
+- `events[].real` (optional boolean)
 - `events[].variants[]`
 - `events[].variants[].name`
 - `events[].variants[].name_i18n` (optional localized label map)
 - `events[].variants[].legacy` (optional boolean)
+- `events[].variants[].real` (optional boolean)
 - `events[].variants[].types[]`
 - `events[].variants[].types[].name`
 - `events[].variants[].types[].name_i18n` (optional localized label map)
 - `events[].variants[].types[].legacy` (optional boolean)
+- `events[].variants[].types[].real` (optional boolean)
 - `events[].variants[].types[].width_m`
 - `events[].variants[].types[].depth_m`
 - `events[].variants[].types[].height_m`
@@ -70,6 +78,12 @@ Legacy behavior:
 - If a `variant` is marked `legacy: true`, contained types are treated as legacy unless a type explicitly sets its own `legacy`.
 - If a `type` is marked `legacy: true`, only that type is legacy.
 - Legacy entries are hidden unless `Show legacy` is enabled.
+
+Real-event behavior:
+- If an `event` is marked `real: true`, all contained variants/types are treated as real-event content unless overridden by explicit fields in descendants.
+- If a `variant` is marked `real: true`, contained types are treated as real-event content unless a type explicitly sets its own `real`.
+- If a `type` is marked `real: true`, only that type is real-event content.
+- Real-event entries are hidden unless `Show real events` is enabled.
 
 Localization behavior:
 - `name` is always the canonical/fallback English key used internally.
